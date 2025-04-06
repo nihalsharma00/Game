@@ -9,17 +9,27 @@ let specialReady = false, specialCooldown = false, lastSpecial = 0;
 let lastFire = 0, fireRate = 600;
 let spawnRate = 2000, lastSpawn = 0;
 let gameOver = false;
+let gamePaused = false;
+let started = false;
 let touches = [];
-let paused = false;
 
 document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+
+  if (!started && e.key === 'Enter') {
+    started = true;
+    init();
+  }
+
+  if (gameOver && e.key === 'Enter') {
+    location.reload();
+  }
+
   if (e.key === ' ') {
-    e.preventDefault();
-    paused = !paused;
-  } else {
-    keys[e.key] = true;
+    gamePaused = !gamePaused;
   }
 });
+
 document.addEventListener('keyup', e => keys[e.key] = false);
 canvas.addEventListener('touchstart', e => touches = e.touches);
 canvas.addEventListener('touchmove', e => touches = e.touches);
@@ -58,7 +68,7 @@ class Player {
 }
 
 class Bullet {
-  constructor(x, y, angle, speed = 8) {
+  constructor(x, y, angle = -Math.PI / 2, speed = 8) {
     this.x = x;
     this.y = y;
     this.radius = 4;
@@ -107,7 +117,7 @@ class Enemy {
 function fireBullet() {
   const now = Date.now();
   if (now - lastFire >= fireRate) {
-    bullets.push(new Bullet(player.x, player.y, -Math.PI / 2));
+    bullets.push(new Bullet(player.x, player.y));
     lastFire = now;
   }
 }
@@ -184,24 +194,34 @@ function updateUI() {
   ctx.fillText(`Special: ${specialReady ? 'READY' : specialCooldown ? 'Cooldown' : 'Charging...'}`, 10, 100);
 }
 
-function gameLoop() {
-  if (gameOver) return;
-
+function drawStartScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'white';
+  ctx.font = '32px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('▶ Press ENTER to Start', canvas.width / 2, canvas.height / 2);
+}
 
-  if (paused) {
-    ctx.fillStyle = 'white';
-    ctx.font = '32px monospace';
-    ctx.fillText('Paused', canvas.width / 2 - 60, canvas.height / 2);
+function gameLoop() {
+  if (!started) {
+    drawStartScreen();
     requestAnimationFrame(gameLoop);
     return;
   }
 
+  if (gameOver) return;
+  if (gamePaused) {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   player.update();
   player.draw();
 
-  if (keys['n'] || keys['N']) fireBullet();
+  if (keys['n']) fireBullet();
   if (keys['j']) fireSpecial();
+
   spawnEnemies();
   checkCollisions();
 
@@ -224,5 +244,3 @@ function init() {
   player = new Player();
   gameLoop();
 }
-
-init();
