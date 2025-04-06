@@ -12,22 +12,19 @@ let gameOver = false;
 let touches = [];
 let paused = false;
 
-
-document.addEventListener('keydown', e => keys[e.key] = true);
-document.addEventListener('keyup', e => keys[e.key] = false);
-canvas.addEventListener('touchstart', e => touches = e.touches);
-canvas.addEventListener('touchmove', e => touches = e.touches);
-canvas.addEventListener('touchend', e => touches = []);
-document.getElementById('restartBtn').onclick = () => location.reload();
-
 document.addEventListener('keydown', e => {
   if (e.key === ' ') {
+    e.preventDefault();
     paused = !paused;
   } else {
     keys[e.key] = true;
   }
 });
-
+document.addEventListener('keyup', e => keys[e.key] = false);
+canvas.addEventListener('touchstart', e => touches = e.touches);
+canvas.addEventListener('touchmove', e => touches = e.touches);
+canvas.addEventListener('touchend', e => touches = []);
+document.getElementById('restartBtn').onclick = () => location.reload();
 
 class Player {
   constructor() {
@@ -189,7 +186,17 @@ function updateUI() {
 
 function gameLoop() {
   if (gameOver) return;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (paused) {
+    ctx.fillStyle = 'white';
+    ctx.font = '32px monospace';
+    ctx.fillText('Paused', canvas.width / 2 - 60, canvas.height / 2);
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
   player.update();
   player.draw();
 
