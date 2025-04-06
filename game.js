@@ -99,7 +99,7 @@ class Enemy {
 function fireBullet() {
   const now = Date.now();
   if (now - lastFire >= fireRate) {
-    bullets.push(new Bullet(player.x, player.y, 0));
+    bullets.push(new Bullet(player.x, player.y, -Math.PI / 2));
     lastFire = now;
   }
 }
