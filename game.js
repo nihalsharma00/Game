@@ -196,9 +196,18 @@ function updateUI() {
 
 function drawStartScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw background
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Text settings
   ctx.fillStyle = 'white';
-  ctx.font = '32px monospace';
+  ctx.font = 'bold 40px monospace';
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Start icon/message
   ctx.fillText('▶ Press ENTER to Start', canvas.width / 2, canvas.height / 2);
 }
 
