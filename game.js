@@ -182,7 +182,7 @@ function gameLoop() {
   player.update();
   player.draw();
 
-  if (keys[' ']) fireBullet();
+  if (keys['n'] || keys['N']) fireBullet();
   if (keys['j']) fireSpecial();
   spawnEnemies();
   checkCollisions();
