@@ -10,6 +10,8 @@ let lastFire = 0, fireRate = 600;
 let spawnRate = 2000, lastSpawn = 0;
 let gameOver = false;
 let touches = [];
+let paused = false;
+
 
 document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);
@@ -17,6 +19,15 @@ canvas.addEventListener('touchstart', e => touches = e.touches);
 canvas.addEventListener('touchmove', e => touches = e.touches);
 canvas.addEventListener('touchend', e => touches = []);
 document.getElementById('restartBtn').onclick = () => location.reload();
+
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') {
+    paused = !paused;
+  } else {
+    keys[e.key] = true;
+  }
+});
+
 
 class Player {
   constructor() {
