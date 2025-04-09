@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Endless Shooter</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>Endless Shooting Game</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <canvas id="game"></canvas>
-
-  <div id="startScreen">
-    <h1>Endless Shooter</h1>
-    <p>Press Enter to Start</p>
+  <div id="startScreen" class="overlay">
+    <h1>Endless Shooting Game</h1>
+    <p>Press <strong>Enter</strong> to Start</p>
+    <p>Use Arrow Keys / WASD to Move</p>
+    <p>Press <strong>Space</strong> to Shoot</p>
+    <p>Special Attack (30 kills): Press <strong>J</strong></p>
   </div>
 
-  <div id="gameOverScreen">
+  <canvas id="game"></canvas>
+
+  <div id="gameOverScreen" class="overlay">
     <h1>Game Over</h1>
-    <p id="finalScore"></p>
-    <p id="highScore"></p>
-    <p>Press Enter or click to restart</p>
+    <p>Score: <span id="finalScore">0</span></p>
+    <p>High Score: <span id="highScore">0</span></p>
     <button id="restartBtn">Restart</button>
   </div>
 
