@@ -4,24 +4,29 @@ canvas.width = innerWidth;
 canvas.height = innerHeight;
 
 let keys = {};
-let player, bullets = [], enemies = [];
-let score = 0, level = 1, kills = 0;
-let fireRate = 600, lastFire = 0;
-let spawnRate = 2000, lastSpawn = 0;
+let player, bullets = [], enemies = [], score = 0, level = 1, kills = 0;
 let specialReady = false, specialCooldown = false, lastSpecial = 0;
-let gameStarted = false, gameOver = false, paused = false;
+let lastFire = 0, fireRate = 600;
+let spawnRate = 2000, lastSpawn = 0;
+let gameOver = false;
+let gamePaused = false;
+let started = false;
 let touches = [];
 
 document.addEventListener('keydown', e => {
   keys[e.key] = true;
-  if (!gameStarted && e.key === 'Enter') {
-    document.getElementById('startScreen').style.display = 'none';
+
+  if (!started && e.key === 'Enter') {
+    started = true;
     init();
-    gameStarted = true;
-  } else if (gameOver && e.key === 'Enter') {
+  }
+
+  if (gameOver && e.key === 'Enter') {
     location.reload();
-  } else if (e.key === ' ') {
-    paused = !paused;
+  }
+
+  if (e.key === ' ') {
+    gamePaused = !gamePaused;
   }
 });
 
@@ -63,14 +68,17 @@ class Player {
 }
 
 class Bullet {
-  constructor(x, y) {
+  constructor(x, y, angle = -Math.PI / 2, speed = 8) {
     this.x = x;
     this.y = y;
     this.radius = 4;
-    this.speed = 8;
+    this.speed = speed;
+    this.vx = Math.cos(angle) * this.speed;
+    this.vy = Math.sin(angle) * this.speed;
   }
   update() {
-    this.y -= this.speed;
+    this.x += this.vx;
+    this.y += this.vy;
   }
   draw() {
     ctx.beginPath();
@@ -124,11 +132,7 @@ function fireSpecial() {
     lastSpecial = now;
     const interval = setInterval(() => {
       const angle = (Math.PI * 2 * fired) / totalBullets;
-      const bx = Math.cos(angle) * 1;
-      const by = Math.sin(angle) * 1;
-      bullets.push(new Bullet(player.x + bx * 10, player.y + by * 10));
-      bullets[bullets.length - 1].vx = bx * 8;
-      bullets[bullets.length - 1].vy = by * 8;
+      bullets.push(new Bullet(player.x, player.y, angle));
       fired++;
       if (fired >= totalBullets) clearInterval(interval);
     }, 80);
@@ -188,12 +192,25 @@ function updateUI() {
   ctx.fillText(`Lives: ${player.lives}`, 10, 60);
   ctx.fillText(`Kills: ${kills}`, 10, 80);
   ctx.fillText(`Special: ${specialReady ? 'READY' : specialCooldown ? 'Cooldown' : 'Charging...'}`, 10, 100);
-  if (paused) ctx.fillText("PAUSED", canvas.width / 2 - 30, 30);
+}
+
+function drawStartScreen() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'white';
+  ctx.font = '32px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('▶ Press ENTER to Start', canvas.width / 2, canvas.height / 2);
 }
 
 function gameLoop() {
-  if (gameOver || !gameStarted) return;
-  if (paused) {
+  if (!started) {
+    drawStartScreen();
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  if (gameOver) return;
+  if (gamePaused) {
     requestAnimationFrame(gameLoop);
     return;
   }
@@ -202,13 +219,15 @@ function gameLoop() {
   player.update();
   player.draw();
 
-  if (keys['n'] || keys['N']) fireBullet();
-  if (keys['j'] || keys['J']) fireSpecial();
+  if (keys['n']) fireBullet();
+  if (keys['j']) fireSpecial();
+
   spawnEnemies();
   checkCollisions();
 
-  bullets = bullets.filter(b => b.y > 0);
+  bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
   bullets.forEach(b => { b.update(); b.draw(); });
+
   enemies.forEach(e => { e.update(); e.draw(); });
 
   if (score >= level * 1000) {
