@@ -17,20 +17,7 @@ canvas {
   background: black;
 }
 
-#startScreen {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  background: rgba(0,0,0,0.8);
-  padding: 30px;
-  border: 2px solid white;
-  border-radius: 10px;
-  text-align: center;
-}
-
-
+#startScreen,
 #gameOverScreen {
   position: absolute;
   top: 50%;
@@ -41,8 +28,16 @@ canvas {
   color: white;
   border: 2px solid white;
   border-radius: 10px;
-  display: none;
   text-align: center;
+  z-index: 10;
+}
+
+#startScreen {
+  display: block;
+}
+
+#gameOverScreen {
+  display: none;
 }
 
 #restartBtn {
