@@ -4,61 +4,56 @@ canvas.width = innerWidth;
 canvas.height = innerHeight;
 
 let keys = {};
-let player, bullets = [], enemies = [], score = 0, level = 1, kills = 0;
+let player, bullets = [], enemies = [];
+let score = 0, level = 1, kills = 0;
 let specialReady = false, specialCooldown = false, lastSpecial = 0;
 let lastFire = 0, fireRate = 600;
 let spawnRate = 2000, lastSpawn = 0;
 let gameOver = false;
-let gamePaused = false;
-let started = false;
-let touches = [];
+let gameStarted = false;
+let paused = false;
 
 document.addEventListener('keydown', e => {
-  keys[e.key] = true;
+  keys[e.key.toLowerCase()] = true;
 
-  if (!started && e.key === 'Enter') {
-    started = true;
-    init();
-  }
-
-  if (gameOver && e.key === 'Enter') {
-    location.reload();
+  if (e.key === 'Enter') {
+    if (!gameStarted || gameOver) {
+      location.reload();
+    }
   }
 
   if (e.key === ' ') {
-    gamePaused = !gamePaused;
+    if (gameStarted && !gameOver) {
+      paused = !paused;
+    }
   }
 });
 
-document.addEventListener('keyup', e => keys[e.key] = false);
-canvas.addEventListener('touchstart', e => touches = e.touches);
-canvas.addEventListener('touchmove', e => touches = e.touches);
-canvas.addEventListener('touchend', e => touches = []);
+document.addEventListener('keyup', e => {
+  keys[e.key.toLowerCase()] = false;
+});
+
 document.getElementById('restartBtn').onclick = () => location.reload();
 
 class Player {
   constructor() {
     this.x = canvas.width / 2;
-    this.y = canvas.height / 2;
+    this.y = canvas.height - 60;
     this.radius = 15;
     this.speed = 4;
     this.lives = 3;
   }
-  update() {
-    if (keys['ArrowUp'] || keys['w']) this.y -= this.speed;
-    if (keys['ArrowDown'] || keys['s']) this.y += this.speed;
-    if (keys['ArrowLeft'] || keys['a']) this.x -= this.speed;
-    if (keys['ArrowRight'] || keys['d']) this.x += this.speed;
 
-    if (touches.length === 1) {
-      const t = touches[0];
-      this.x = t.clientX;
-      this.y = t.clientY;
-    }
+  update() {
+    if (keys['arrowup'] || keys['w']) this.y -= this.speed;
+    if (keys['arrowdown'] || keys['s']) this.y += this.speed;
+    if (keys['arrowleft'] || keys['a']) this.x -= this.speed;
+    if (keys['arrowright'] || keys['d']) this.x += this.speed;
 
     this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
     this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
   }
+
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -76,10 +71,12 @@ class Bullet {
     this.vx = Math.cos(angle) * this.speed;
     this.vy = Math.sin(angle) * this.speed;
   }
+
   update() {
     this.x += this.vx;
     this.y += this.vy;
   }
+
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -99,6 +96,7 @@ class Enemy {
     this.radius = 15;
     this.speed = 1.5 + level * 0.2;
   }
+
   update() {
     const dx = player.x - this.x;
     const dy = player.y - this.y;
@@ -106,6 +104,7 @@ class Enemy {
     this.x += Math.cos(angle) * this.speed;
     this.y += Math.sin(angle) * this.speed;
   }
+
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -130,12 +129,14 @@ function fireSpecial() {
     specialReady = false;
     specialCooldown = true;
     lastSpecial = now;
+
     const interval = setInterval(() => {
       const angle = (Math.PI * 2 * fired) / totalBullets;
       bullets.push(new Bullet(player.x, player.y, angle));
       fired++;
       if (fired >= totalBullets) clearInterval(interval);
     }, 80);
+
     setTimeout(() => {
       kills = 0;
       specialCooldown = false;
@@ -196,30 +197,24 @@ function updateUI() {
 
 function drawStartScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw background
   ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Text settings
   ctx.fillStyle = 'white';
   ctx.font = 'bold 40px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-
-  // Start icon/message
   ctx.fillText('▶ Press ENTER to Start', canvas.width / 2, canvas.height / 2);
 }
 
 function gameLoop() {
-  if (!started) {
+  if (!gameStarted) {
     drawStartScreen();
     requestAnimationFrame(gameLoop);
     return;
   }
 
-  if (gameOver) return;
-  if (gamePaused) {
+  if (paused || gameOver) {
     requestAnimationFrame(gameLoop);
     return;
   }
@@ -251,5 +246,14 @@ function gameLoop() {
 
 function init() {
   player = new Player();
+  gameStarted = true;
   gameLoop();
 }
+
+drawStartScreen();
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !gameStarted) {
+    init();
+  }
+});
