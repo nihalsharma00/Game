@@ -13,21 +13,20 @@ let gamePaused = false;
 let started = false;
 let touches = [];
 
+const bgMusic = new Audio('assets/music.mp3');
+bgMusic.loop = true;
+
 document.addEventListener('keydown', e => {
   keys[e.key] = true;
 
   if (!started && e.key === 'Enter') {
     started = true;
+    bgMusic.play();
     init();
   }
 
-  if (gameOver && e.key === 'Enter') {
-    location.reload();
-  }
-
-  if (e.key === ' ') {
-    gamePaused = !gamePaused;
-  }
+  if (gameOver && e.key === 'Enter') location.reload();
+  if (e.key === ' ') gamePaused = !gamePaused;
 });
 
 document.addEventListener('keyup', e => keys[e.key] = false);
@@ -49,13 +48,11 @@ class Player {
     if (keys['ArrowDown'] || keys['s']) this.y += this.speed;
     if (keys['ArrowLeft'] || keys['a']) this.x -= this.speed;
     if (keys['ArrowRight'] || keys['d']) this.x += this.speed;
-
     if (touches.length === 1) {
       const t = touches[0];
       this.x = t.clientX;
       this.y = t.clientY;
     }
-
     this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
     this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
   }
@@ -194,25 +191,25 @@ function updateUI() {
   ctx.fillText(`Special: ${specialReady ? 'READY' : specialCooldown ? 'Cooldown' : 'Charging...'}`, 10, 100);
 }
 
-// Updated start screen function with controls
 function drawStartScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'white';
-  ctx.font = '32px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('▶ Press Enter to Start', canvas.width / 2, canvas.height / 2 - 40);
-
-  // Instructions for controls
-  ctx.font = '24px monospace';
-  ctx.fillText('Controls:', canvas.width / 2, canvas.height / 2);
-  ctx.fillText('Move: Arrow keys or WASD', canvas.width / 2, canvas.height / 2 + 40);
-  ctx.fillText('Shoot: N', canvas.width / 2, canvas.height / 2 + 70);
-  ctx.fillText('Special Attack: J (ready after 30 kills)', canvas.width / 2, canvas.height / 2 + 100);
+  const bg = new Image();
+  bg.src = 'assets/start-bg.jpg';
+  bg.onload = () => {
+    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.font = '48px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('▶ Press Enter to Start', canvas.width / 2, canvas.height / 2 - 40);
+    ctx.font = '24px "Press Start 2P", monospace';
+    ctx.fillText('Move: Arrow keys or WASD', canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Shoot: N  |  Special: J (30 kills)', canvas.width / 2, canvas.height / 2 + 60);
+  };
 }
 
 function gameLoop() {
   if (!started) {
-    drawStartScreen();  // Show the start screen
+    drawStartScreen();
     requestAnimationFrame(gameLoop);
     return;
   }
@@ -235,10 +232,9 @@ function gameLoop() {
 
   bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
   bullets.forEach(b => { b.update(); b.draw(); });
-  
+
   enemies.forEach(e => { e.update(); e.draw(); });
 
-  // Leveling up logic
   if (score >= level * 1000) {
     level++;
     fireRate *= 0.9;
@@ -249,14 +245,13 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Initialize the game state and start the game loop
 function init() {
   player = new Player();
-  score = 0; // Reset score
-  level = 1; // Reset level
-  kills = 0; // Reset kills
-  specialReady = false; // Reset special readiness
-  specialCooldown = false; // Reset special cooldown
-  gameOver = false; // Reset game over state
+  score = 0;
+  level = 1;
+  kills = 0;
+  specialReady = false;
+  specialCooldown = false;
+  gameOver = false;
   gameLoop();
 }
