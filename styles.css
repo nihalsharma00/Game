@@ -1,47 +1,56 @@
-* {
+body, html {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  background-color: black;
   overflow: hidden;
-  font-family: monospace;
+  background: black;
+  font-family: 'Orbitron', sans-serif;
+  color: white;
 }
 
 canvas {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  background: black;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
 }
 
-#gameOverScreen {
+#startScreen, #gameOverScreen {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: white;
   text-align: center;
   background: rgba(0, 0, 0, 0.8);
-  padding: 30px 50px;
+  padding: 30px;
   border: 2px solid white;
-  border-radius: 12px;
+  border-radius: 20px;
+  z-index: 2;
   display: none;
 }
 
-#restartBtn {
-  margin-top: 15px;
-  padding: 10px 20px;
-  font-size: 16px;
-  background: white;
-  color: black;
-  border: none;
-  cursor: pointer;
-  border-radius: 8px;
+#startScreen h1 {
+  font-size: 40px;
+  margin-bottom: 10px;
 }
 
-#restartBtn:hover {
-  background: #ddd;
+#startScreen p {
+  font-size: 22px;
+  margin: 10px 0;
+}
+
+#gameOverScreen h2 {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+#restartBtn {
+  padding: 10px 20px;
+  font-size: 18px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.instructions {
+  margin-top: 20px;
+  font-size: 16px;
 }
