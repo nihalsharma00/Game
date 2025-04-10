@@ -1,27 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Retro Endless Shooter</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endless Shooting Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="start-screen">
-    <p>▶ Press Enter to Start</p>
-  </div>
-
-  <canvas id="gameCanvas"></canvas>
-
-  <div id="game-over">
-    <h1>Game Over</h1>
-    <p id="final-score"></p>
-    <p id="high-score"></p>
-    <button id="restart-button">Restart</button>
-  </div>
-
-  <audio id="bg-music" loop src="music.mp3"></audio>
-  <script src="script.js"></script>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="gameOverScreen" class="hidden">
+            <h2 id="finalScore"></h2>
+            <h2 id="highScore"></h2>
+            <button id="restartButton">Restart</button>
+        </div>
+    </div>
+    <audio id="bgMusic" src="path/to/your/background-music.mp3" loop></audio>
+    <script src="script.js"></script>
 </body>
 </html>
