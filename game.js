@@ -1,257 +1,47 @@
-const canvas = document.getElementById('game');
+const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = innerWidth;
-canvas.height = innerHeight;
 
-let keys = {};
-let player, bullets = [], enemies = [], score = 0, level = 1, kills = 0;
-let specialReady = false, specialCooldown = false, lastSpecial = 0;
-let lastFire = 0, fireRate = 600;
-let spawnRate = 2000, lastSpawn = 0;
-let gameOver = false;
-let gamePaused = false;
-let started = false;
-let touches = [];
+let width = window.innerWidth;
+let height = window.innerHeight;
+canvas.width = width;
+canvas.height = height;
 
-const bgMusic = new Audio('assets/music.mp3');
-bgMusic.loop = true;
+const bgMusic = document.getElementById("bg-music");
+const startScreen = document.getElementById("start-screen");
+const gameOverScreen = document.getElementById("game-over");
+const finalScoreEl = document.getElementById("final-score");
+const highScoreEl = document.getElementById("high-score");
+const restartButton = document.getElementById("restart-button");
 
-document.addEventListener('keydown', e => {
-  keys[e.key] = true;
-
-  if (!started && e.key === 'Enter') {
-    started = true;
-    bgMusic.play();
-    init();
-  }
-
-  if (gameOver && e.key === 'Enter') location.reload();
-  if (e.key === ' ') gamePaused = !gamePaused;
-});
-
-document.addEventListener('keyup', e => keys[e.key] = false);
-canvas.addEventListener('touchstart', e => touches = e.touches);
-canvas.addEventListener('touchmove', e => touches = e.touches);
-canvas.addEventListener('touchend', e => touches = []);
-document.getElementById('restartBtn').onclick = () => location.reload();
+let keys = {}, touches = {};
+let gameRunning = false, gameOver = false, score = 0, level = 1, kills = 0;
+let lastSpecial = 0;
+let player, bullets = [], enemies = [], explosions = [];
 
 class Player {
   constructor() {
-    this.x = canvas.width / 2;
-    this.y = canvas.height / 2;
-    this.radius = 15;
+    this.x = width / 2;
+    this.y = height / 2;
+    this.radius = 20;
     this.speed = 4;
     this.lives = 3;
+    this.cooldown = 0;
   }
-  update() {
+
+  move() {
     if (keys['ArrowUp'] || keys['w']) this.y -= this.speed;
     if (keys['ArrowDown'] || keys['s']) this.y += this.speed;
     if (keys['ArrowLeft'] || keys['a']) this.x -= this.speed;
     if (keys['ArrowRight'] || keys['d']) this.x += this.speed;
-    if (touches.length === 1) {
-      const t = touches[0];
-      this.x = t.clientX;
-      this.y = t.clientY;
-    }
-    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-    this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+
+    this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
+    this.y = Math.max(this.radius, Math.min(height - this.radius, this.y));
   }
+
   draw() {
     ctx.beginPath();
+    ctx.fillStyle = '#0ff';
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'white';
     ctx.fill();
   }
-}
-
-class Bullet {
-  constructor(x, y, angle = -Math.PI / 2, speed = 8) {
-    this.x = x;
-    this.y = y;
-    this.radius = 4;
-    this.speed = speed;
-    this.vx = Math.cos(angle) * this.speed;
-    this.vy = Math.sin(angle) * this.speed;
-  }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-  }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'yellow';
-    ctx.fill();
-  }
-}
-
-class Enemy {
-  constructor() {
-    const edge = Math.floor(Math.random() * 4);
-    const buffer = 50;
-    if (edge === 0) { this.x = Math.random() * canvas.width; this.y = -buffer; }
-    if (edge === 1) { this.x = canvas.width + buffer; this.y = Math.random() * canvas.height; }
-    if (edge === 2) { this.x = Math.random() * canvas.width; this.y = canvas.height + buffer; }
-    if (edge === 3) { this.x = -buffer; this.y = Math.random() * canvas.height; }
-    this.radius = 15;
-    this.speed = 1.5 + level * 0.2;
-  }
-  update() {
-    const dx = player.x - this.x;
-    const dy = player.y - this.y;
-    const angle = Math.atan2(dy, dx);
-    this.x += Math.cos(angle) * this.speed;
-    this.y += Math.sin(angle) * this.speed;
-  }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-  }
-}
-
-function fireBullet() {
-  const now = Date.now();
-  if (now - lastFire >= fireRate) {
-    bullets.push(new Bullet(player.x, player.y));
-    lastFire = now;
-  }
-}
-
-function fireSpecial() {
-  const now = Date.now();
-  if (specialReady && !specialCooldown) {
-    const totalBullets = Math.floor(50 * (1 + 0.02 * level));
-    let fired = 0;
-    specialReady = false;
-    specialCooldown = true;
-    lastSpecial = now;
-    const interval = setInterval(() => {
-      const angle = (Math.PI * 2 * fired) / totalBullets;
-      bullets.push(new Bullet(player.x, player.y, angle));
-      fired++;
-      if (fired >= totalBullets) clearInterval(interval);
-    }, 80);
-    setTimeout(() => {
-      kills = 0;
-      specialCooldown = false;
-    }, 15000);
-  }
-}
-
-function spawnEnemies() {
-  const now = Date.now();
-  if (now - lastSpawn >= spawnRate) {
-    enemies.push(new Enemy());
-    lastSpawn = now;
-  }
-}
-
-function checkCollisions() {
-  bullets.forEach((b, bi) => {
-    enemies.forEach((e, ei) => {
-      const dist = Math.hypot(b.x - e.x, b.y - e.y);
-      if (dist < b.radius + e.radius) {
-        bullets.splice(bi, 1);
-        enemies.splice(ei, 1);
-        score += 100;
-        kills++;
-        if (!specialCooldown && kills >= 30) specialReady = true;
-      }
-    });
-  });
-
-  enemies.forEach((e, ei) => {
-    const dist = Math.hypot(e.x - player.x, e.y - player.y);
-    if (dist < e.radius + player.radius) {
-      enemies.splice(ei, 1);
-      player.lives--;
-      if (player.lives <= 0) endGame();
-    }
-  });
-}
-
-function endGame() {
-  gameOver = true;
-  document.getElementById('gameOverScreen').style.display = 'block';
-  document.getElementById('finalScore').textContent = 'Score: ' + score;
-  const high = Math.max(score, localStorage.getItem('highScore') || 0);
-  localStorage.setItem('highScore', high);
-  document.getElementById('highScore').textContent = 'High Score: ' + high;
-}
-
-function updateUI() {
-  ctx.fillStyle = 'white';
-  ctx.font = '16px monospace';
-  ctx.fillText(`Score: ${score}`, 10, 20);
-  ctx.fillText(`Level: ${level}`, 10, 40);
-  ctx.fillText(`Lives: ${player.lives}`, 10, 60);
-  ctx.fillText(`Kills: ${kills}`, 10, 80);
-  ctx.fillText(`Special: ${specialReady ? 'READY' : specialCooldown ? 'Cooldown' : 'Charging...'}`, 10, 100);
-}
-
-function drawStartScreen() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const bg = new Image();
-  bg.src = 'assets/start-bg.jpg';
-  bg.onload = () => {
-    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.font = '48px "Press Start 2P", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('▶ Press Enter to Start', canvas.width / 2, canvas.height / 2 - 40);
-    ctx.font = '24px "Press Start 2P", monospace';
-    ctx.fillText('Move: Arrow keys or WASD', canvas.width / 2, canvas.height / 2 + 20);
-    ctx.fillText('Shoot: N  |  Special: J (30 kills)', canvas.width / 2, canvas.height / 2 + 60);
-  };
-}
-
-function gameLoop() {
-  if (!started) {
-    drawStartScreen();
-    requestAnimationFrame(gameLoop);
-    return;
-  }
-
-  if (gameOver) return;
-  if (gamePaused) {
-    requestAnimationFrame(gameLoop);
-    return;
-  }
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  player.update();
-  player.draw();
-
-  if (keys['n']) fireBullet();
-  if (keys['j']) fireSpecial();
-
-  spawnEnemies();
-  checkCollisions();
-
-  bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
-  bullets.forEach(b => { b.update(); b.draw(); });
-
-  enemies.forEach(e => { e.update(); e.draw(); });
-
-  if (score >= level * 1000) {
-    level++;
-    fireRate *= 0.9;
-    spawnRate = Math.max(500, spawnRate - 100);
-  }
-
-  updateUI();
-  requestAnimationFrame(gameLoop);
-}
-
-function init() {
-  player = new Player();
-  score = 0;
-  level = 1;
-  kills = 0;
-  specialReady = false;
-  specialCooldown = false;
-  gameOver = false;
-  gameLoop();
 }
