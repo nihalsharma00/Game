@@ -196,11 +196,19 @@ function updateUI() {
 
 function drawStartScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
   ctx.fillStyle = 'white';
-  ctx.font = '32px monospace';
+  ctx.font = 'bold 40px monospace';
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  
   ctx.fillText('▶ Press ENTER to Start', canvas.width / 2, canvas.height / 2);
 }
+
 
 function gameLoop() {
   if (!started) {
