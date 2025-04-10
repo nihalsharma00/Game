@@ -194,17 +194,25 @@ function updateUI() {
   ctx.fillText(`Special: ${specialReady ? 'READY' : specialCooldown ? 'Cooldown' : 'Charging...'}`, 10, 100);
 }
 
+// Updated start screen function with controls
 function drawStartScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = 'white';
   ctx.font = '32px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('▶ Press ENTER to Start', canvas.width / 2, canvas.height / 2);
+  ctx.fillText('▶ Press Enter to Start', canvas.width / 2, canvas.height / 2 - 40);
+
+  // Instructions for controls
+  ctx.font = '24px monospace';
+  ctx.fillText('Controls:', canvas.width / 2, canvas.height / 2);
+  ctx.fillText('Move: Arrow keys or WASD', canvas.width / 2, canvas.height / 2 + 40);
+  ctx.fillText('Shoot: N', canvas.width / 2, canvas.height / 2 + 70);
+  ctx.fillText('Special Attack: J (ready after 30 kills)', canvas.width / 2, canvas.height / 2 + 100);
 }
 
 function gameLoop() {
   if (!started) {
-    drawStartScreen();
+    drawStartScreen();  // Show the start screen
     requestAnimationFrame(gameLoop);
     return;
   }
@@ -227,9 +235,10 @@ function gameLoop() {
 
   bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
   bullets.forEach(b => { b.update(); b.draw(); });
-
+  
   enemies.forEach(e => { e.update(); e.draw(); });
 
+  // Leveling up logic
   if (score >= level * 1000) {
     level++;
     fireRate *= 0.9;
@@ -240,8 +249,14 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
+// Initialize the game state and start the game loop
 function init() {
   player = new Player();
+  score = 0; // Reset score
+  level = 1; // Reset level
+  kills = 0; // Reset kills
+  specialReady = false; // Reset special readiness
+  specialCooldown = false; // Reset special cooldown
+  gameOver = false; // Reset game over state
   gameLoop();
 }
-
