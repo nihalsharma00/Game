@@ -1,281 +1,266 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-let player = {
-    x: canvas.width / 2,
-    y: canvas.height - 60,
-    size: 20,
-    speed: 5
-};
-
-let bullets = [];
-let enemies = [];
-let explosions = [];
-let score = 0;
-let level = 1;
-let lives = 3;
-let kills = 0;
-let isGameOver = false;
-let isGameStarted = false;
-let specialAttackReady = false;
-let specialCooldown = false;
+let player, bullets = [], enemies = [], score = 0, level = 1, lives = 3, kills = 0;
+let canShoot = true, shootCooldown = 600, lastShotTime = 0;
+let isGameRunning = false, isGameOver = false;
+let mouseX = canvas.width / 2, mouseY = canvas.height / 2;
 let keys = {};
-let lastBulletTime = 0;
-let fireRate = 0.6; // seconds
-let enemySpeed = 1;
-let playerSpeed = 5;
-let bulletInterval;
-let touchStart = null;
-let highScore = localStorage.getItem("highScore") || 0;
+let specialUnlocked = false, specialCooldown = false;
+let spawnTimer = 0, spawnInterval = 1000, maxEnemies = 20;
 
-// Spiral attack
-let specialBullets = [];
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === 'Enter') {
+    if (!isGameRunning) startGame();
+    else if (isGameOver) restartGame();
+  }
+  if (e.key === 'j' || e.key === 'J') useSpecial();
+});
 
-document.addEventListener("keydown", (e) => {
-    keys[e.key] = true;
-    if (!isGameStarted && e.key === "Enter") startGame();
-    if (isGameOver && e.key === "Enter") restartGame();
-    if (e.key === "j" && specialAttackReady && !specialCooldown) triggerSpecial();
+document.addEventListener('keyup', e => keys[e.key] = false);
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
 });
-document.addEventListener("keyup", (e) => keys[e.key] = false);
-canvas.addEventListener("mousedown", () => shoot());
-document.addEventListener("touchstart", (e) => touchStart = e.touches[0]);
-document.addEventListener("touchmove", (e) => {
-    if (!touchStart) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - touchStart.clientX;
-    const dy = touch.clientY - touchStart.clientY;
-    player.x += dx * 0.1;
-    player.y += dy * 0.1;
-    touchStart = touch;
-});
-window.addEventListener("resize", () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
+document.addEventListener('mousedown', () => shoot());
+document.addEventListener('touchstart', e => {
+  if (!isGameRunning) startGame();
+  else shoot();
+}, { passive: false });
+
+class Player {
+  constructor() {
+    this.x = canvas.width / 2;
+    this.y = canvas.height / 2;
+    this.radius = 20;
+    this.speed = 4;
+  }
+
+  move() {
+    if (keys['w'] || keys['ArrowUp']) this.y -= this.speed;
+    if (keys['s'] || keys['ArrowDown']) this.y += this.speed;
+    if (keys['a'] || keys['ArrowLeft']) this.x -= this.speed;
+    if (keys['d'] || keys['ArrowRight']) this.x += this.speed;
+
+    // Limit to screen
+    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+    this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#0ff';
+    ctx.fill();
+  }
+}
+
+class Bullet {
+  constructor(x, y, angle = -Math.PI / 2, speed = 8) {
+    this.x = x;
+    this.y = y;
+    this.radius = 5;
+    this.speed = speed;
+    this.angle = angle;
+  }
+
+  update() {
+    this.x += this.speed * Math.cos(this.angle);
+    this.y += this.speed * Math.sin(this.angle);
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  }
+}
+
+class Enemy {
+  constructor(x, y, isSpecial = false) {
+    this.x = x;
+    this.y = y;
+    this.radius = isSpecial ? 20 : 15;
+    this.isSpecial = isSpecial;
+    this.speed = isSpecial ? 1.5 : 2 + level * 0.2;
+    this.spawnTime = Date.now();
+  }
+
+  update() {
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const angle = Math.atan2(dy, dx);
+    this.x += Math.cos(angle) * this.speed;
+    this.y += Math.sin(angle) * this.speed;
+
+    if (this.isSpecial && Date.now() - this.spawnTime > 5000) {
+      this.explode();
+    }
+  }
+
+  explode() {
+    const dist = Math.hypot(this.x - player.x, this.y - player.y);
+    if (dist < this.radius * 3) {
+      lives--;
+      checkGameOver();
+    }
+    enemies = enemies.filter(e => e !== this);
+    drawExplosion(this.x, this.y);
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.isSpecial ? 'orange' : 'red';
+    ctx.fill();
+  }
+}
+
+function drawExplosion(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, 60, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,165,0,0.4)';
+  ctx.fill();
+}
 
 function shoot() {
-    const now = Date.now();
-    if ((now - lastBulletTime) / 1000 >= fireRate) {
-        bullets.push({ x: player.x, y: player.y, size: 5, speed: 7 });
-        lastBulletTime = now;
-    }
+  if (Date.now() - lastShotTime >= shootCooldown && isGameRunning) {
+    bullets.push(new Bullet(player.x, player.y));
+    lastShotTime = Date.now();
+  }
 }
 
-function triggerSpecial() {
-    specialAttackReady = false;
-    specialCooldown = true;
+function useSpecial() {
+  if (kills >= 30 && !specialCooldown && isGameRunning) {
+    let bulletCount = Math.floor(50 + level * 2);
+    for (let i = 0; i < bulletCount; i++) {
+      const angle = (2 * Math.PI * i) / bulletCount;
+      bullets.push(new Bullet(player.x, player.y, angle, 6));
+    }
     kills = 0;
-    let angle = 0;
-    const count = Math.floor(50 + level * 2);
-    for (let i = 0; i < count; i++) {
-        const rad = angle * Math.PI / 180;
-        specialBullets.push({
-            x: player.x,
-            y: player.y,
-            dx: Math.cos(rad) * 5,
-            dy: Math.sin(rad) * 5,
-            size: 4
-        });
-        angle += 360 / count;
-    }
+    specialCooldown = true;
     setTimeout(() => specialCooldown = false, 15000);
+  }
 }
 
-function createEnemy() {
-    const isExplosive = Math.random() < 0.1;
-    const size = isExplosive ? 25 : 20;
-    let x, y;
-    if (Math.random() < 0.5) {
-        x = Math.random() < 0.5 ? 0 : canvas.width;
-        y = Math.random() * canvas.height;
-    } else {
-        x = Math.random() * canvas.width;
-        y = Math.random() < 0.5 ? 0 : canvas.height;
+function spawnEnemy() {
+  const edge = Math.floor(Math.random() * 4);
+  let x, y;
+  if (edge === 0) { x = Math.random() * canvas.width; y = -20; }
+  else if (edge === 1) { x = canvas.width + 20; y = Math.random() * canvas.height; }
+  else if (edge === 2) { x = Math.random() * canvas.width; y = canvas.height + 20; }
+  else { x = -20; y = Math.random() * canvas.height; }
+
+  const isSpecial = Math.random() < 0.1;
+  enemies.push(new Enemy(x, y, isSpecial));
+}
+
+function updateGame(deltaTime) {
+  player.move();
+  bullets.forEach(b => b.update());
+  bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
+
+  enemies.forEach(e => e.update());
+
+  // Check bullet collisions
+  bullets.forEach(bullet => {
+    enemies.forEach(enemy => {
+      const dist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+      if (dist < bullet.radius + enemy.radius) {
+        bullets = bullets.filter(b => b !== bullet);
+        enemies = enemies.filter(e => e !== enemy);
+        score += 100;
+        kills++;
+
+        if (score >= level * 1000) {
+          level++;
+          shootCooldown = Math.max(100, shootCooldown * 0.9);
+          spawnInterval = Math.max(300, spawnInterval - 50);
+        }
+      }
+    });
+  });
+
+  // Check player collision
+  enemies.forEach(enemy => {
+    const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+    if (!enemy.isSpecial && dist < enemy.radius + player.radius) {
+      enemies = enemies.filter(e => e !== enemy);
+      lives--;
+      checkGameOver();
     }
-    const enemy = {
-        x,
-        y,
-        size,
-        speed: isExplosive ? enemySpeed * 0.8 : enemySpeed,
-        isExplosive,
-        createdAt: Date.now()
-    };
-    enemies.push(enemy);
-}
+  });
 
-function drawPlayer() {
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
-    ctx.fill();
+  // Spawn control
+  spawnTimer += deltaTime;
+  if (spawnTimer >= spawnInterval && enemies.length < maxEnemies) {
+    spawnEnemy();
+    spawnTimer = 0;
+  }
 }
 
 function drawUI() {
-    ctx.fillStyle = "white";
-    ctx.font = "16px Arial";
-    ctx.fillText(`Score: ${score}`, 10, 20);
-    ctx.fillText(`Level: ${level}`, 10, 40);
-    ctx.fillText(`Lives: ${lives}`, 10, 60);
-    ctx.fillText(`Kills: ${kills}`, 10, 80);
-    ctx.fillText(`Special: ${specialAttackReady ? "READY" : specialCooldown ? "COOLDOWN" : "LOCKED"}`, 10, 100);
+  ctx.fillStyle = 'white';
+  ctx.font = '16px Arial';
+  ctx.fillText(`Score: ${score}`, 10, 20);
+  ctx.fillText(`Level: ${level}`, 10, 40);
+  ctx.fillText(`Lives: ${lives}`, 10, 60);
+  ctx.fillText(`Kills: ${kills}`, 10, 80);
+  ctx.fillText(`Special: ${kills >= 30 && !specialCooldown ? "Ready (J)" : specialCooldown ? "Cooldown" : "Locked"}`, 10, 100);
 }
 
-function drawEnemies() {
-    enemies.forEach(e => {
-        ctx.fillStyle = e.isExplosive ? "red" : "lime";
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-}
+let lastTime = 0;
+function animate(time = 0) {
+  if (!isGameRunning) return;
+  const deltaTime = time - lastTime;
+  lastTime = time;
 
-function drawBullets() {
-    ctx.fillStyle = "yellow";
-    bullets.forEach(b => ctx.fillRect(b.x - b.size / 2, b.y - b.size / 2, b.size, b.size));
-    ctx.fillStyle = "cyan";
-    specialBullets.forEach(b => ctx.fillRect(b.x - b.size / 2, b.y - b.size / 2, b.size, b.size));
-}
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-function drawExplosions() {
-    explosions.forEach(ex => {
-        ctx.strokeStyle = "orange";
-        ctx.beginPath();
-        ctx.arc(ex.x, ex.y, ex.radius, 0, Math.PI * 2);
-        ctx.stroke();
-    });
-}
+  player.draw();
+  bullets.forEach(b => b.draw());
+  enemies.forEach(e => e.draw());
+  drawUI();
 
-function moveEnemies() {
-    enemies.forEach(e => {
-        const dx = player.x - e.x;
-        const dy = player.y - e.y;
-        const dist = Math.hypot(dx, dy);
-        e.x += (dx / dist) * e.speed;
-        e.y += (dy / dist) * e.speed;
-    });
-}
-
-function moveBullets() {
-    bullets.forEach(b => b.y -= b.speed);
-    specialBullets.forEach(b => {
-        b.x += b.dx;
-        b.y += b.dy;
-    });
-}
-
-function checkCollisions() {
-    enemies.forEach((e, i) => {
-        bullets.forEach((b, j) => {
-            if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
-                enemies.splice(i, 1);
-                bullets.splice(j, 1);
-                score += 100;
-                kills++;
-                if (kills >= 30 && !specialCooldown) specialAttackReady = true;
-            }
-        });
-        specialBullets.forEach((b, j) => {
-            if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
-                enemies.splice(i, 1);
-                specialBullets.splice(j, 1);
-                score += 100;
-                kills++;
-                if (kills >= 30 && !specialCooldown) specialAttackReady = true;
-            }
-        });
-        if (Math.hypot(e.x - player.x, e.y - player.y) < e.size + player.size) {
-            enemies.splice(i, 1);
-            lives--;
-        }
-        if (e.isExplosive && Date.now() - e.createdAt > 5000) {
-            explosions.push({ x: e.x, y: e.y, radius: e.size * 3, time: Date.now() });
-            enemies.splice(i, 1);
-        }
-    });
-    explosions.forEach((ex, i) => {
-        if (Math.hypot(ex.x - player.x, ex.y - player.y) < ex.radius + player.size) {
-            lives--;
-            explosions.splice(i, 1);
-        }
-    });
-}
-
-function updateGame() {
-    if (!isGameStarted || isGameOver) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    handleInput();
-    moveEnemies();
-    moveBullets();
-    checkCollisions();
-
-    drawPlayer();
-    drawBullets();
-    drawEnemies();
-    drawExplosions();
-    drawUI();
-
-    bullets = bullets.filter(b => b.y > 0);
-    specialBullets = specialBullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
-    explosions = explosions.filter(e => Date.now() - e.time < 500);
-
-    if (score >= level * 1000) {
-        level++;
-        enemySpeed = 1 + level * 0.3;
-        fireRate = Math.max(0.2, fireRate * 0.9);
-    }
-
-    if (lives <= 0) {
-        gameOver();
-    }
-
-    requestAnimationFrame(updateGame);
-}
-
-function handleInput() {
-    if (keys["ArrowLeft"] || keys["a"]) player.x -= player.speed;
-    if (keys["ArrowRight"] || keys["d"]) player.x += player.speed;
-    if (keys["ArrowUp"] || keys["w"]) player.y -= player.speed;
-    if (keys["ArrowDown"] || keys["s"]) player.y += player.speed;
-    if (keys["n"]) shoot();
+  updateGame(deltaTime);
+  if (!isGameOver) requestAnimationFrame(animate);
 }
 
 function startGame() {
-    isGameStarted = true;
-    document.getElementById("startScreen").style.display = "none";
-    setInterval(createEnemy, 1000);
-    updateGame();
-}
-
-function gameOver() {
-    isGameOver = true;
-    highScore = Math.max(score, highScore);
-    localStorage.setItem("highScore", highScore);
-    document.getElementById("finalScore").textContent = `Score: ${score}`;
-    document.getElementById("highScore").textContent = `High Score: ${highScore}`;
-    document.getElementById("gameOverScreen").style.display = "block";
+  document.getElementById('startScreen').style.display = 'none';
+  isGameRunning = true;
+  isGameOver = false;
+  player = new Player();
+  bullets = [];
+  enemies = [];
+  score = 0;
+  level = 1;
+  lives = 3;
+  kills = 0;
+  shootCooldown = 600;
+  spawnInterval = 1000;
+  lastTime = performance.now();
+  requestAnimationFrame(animate);
 }
 
 function restartGame() {
-    player = { x: canvas.width / 2, y: canvas.height - 60, size: 20, speed: 5 };
-    bullets = [];
-    specialBullets = [];
-    enemies = [];
-    explosions = [];
-    score = 0;
-    level = 1;
-    lives = 3;
-    kills = 0;
-    enemySpeed = 1;
-    fireRate = 0.6;
-    specialAttackReady = false;
-    specialCooldown = false;
-    isGameOver = false;
-    isGameStarted = false;
-    document.getElementById("gameOverScreen").style.display = "none";
-    document.getElementById("startScreen").style.display = "block";
+  document.getElementById('gameOverScreen').style.display = 'none';
+  startGame();
+}
+
+function checkGameOver() {
+  if (lives <= 0) {
+    isGameOver = true;
+    isGameRunning = false;
+    document.getElementById('gameOverScreen').style.display = 'flex';
+    document.getElementById('finalScore').textContent = `Your Score: ${score}`;
+    const highScore = Math.max(score, localStorage.getItem('highScore') || 0);
+    localStorage.setItem('highScore', highScore);
+    document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+  }
 }
