@@ -1,20 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Top-Down Shooter Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Endless Shooting Game</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+  </style>
 </head>
 <body>
-  <canvas id="game"></canvas>
+  <div id="startScreen">
+    <h1>Endless Shooting Game</h1>
+    <p>▶ Press Enter to Start</p>
+    <div class="instructions">
+      <p>Move: Arrow Keys or WASD</p>
+      <p>Shoot: N</p>
+      <p>Special Attack: J (after 30 kills)</p>
+      <p>Pause: Spacebar</p>
+    </div>
+  </div>
 
   <div id="gameOverScreen">
-    <h1>Game Over</h1>
+    <h2>Game Over</h2>
     <p id="finalScore"></p>
     <p id="highScore"></p>
     <button id="restartBtn">Restart</button>
   </div>
+
+  <canvas id="game"></canvas>
+
+  <audio id="bgMusic" src="music.mp3" loop></audio>
 
   <script src="game.js"></script>
 </body>
