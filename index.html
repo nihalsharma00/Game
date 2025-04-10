@@ -1,36 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Endless Shooting Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="gameContainer">
-    <canvas id="gameCanvas"></canvas>
-    <div id="gameUI">
-      <div>Score: <span id="score">0</span></div>
-      <div>Level: <span id="level">1</span></div>
-      <div>Lives: <span id="lives">3</span></div>
-      <div>Kills: <span id="kills">0</span></div>
-      <div>Special: <span id="special">Not Ready</span></div>
-    </div>
-    <div id="startScreen">
-      <h1>🕹️ Endless Shooting Game</h1>
-      <p class="instruction">Move: WASD / Arrow keys / Touch</p>
-      <p class="instruction">Shoot: 'N' key / Mouse Click</p>
-      <p class="instruction">Special Attack: 'J' (after 30 kills)</p>
-      <p>Press Enter to Start</p>
-    </div>
-    <div id="gameOverScreen">
-      <h1>💀 Game Over</h1>
-      <p>Score: <span id="finalScore">0</span></p>
-      <p>High Score: <span id="highScore">0</span></p>
-      <p>Press Enter or Click Restart to Play Again</p>
-      <button id="restartButton">Restart</button>
-    </div>
+  <div id="startScreen" class="overlay">
+    <h1>Endless Shooting Game</h1>
+    <p>Press <strong>Enter</strong> to Start</p>
   </div>
+
+  <div id="gameOverScreen" class="overlay" style="display: none;">
+    <h1>Game Over</h1>
+    <p id="finalScore"></p>
+    <p id="highScore"></p>
+    <p>Press <strong>Enter</strong> to Restart</p>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
   <script src="script.js"></script>
 </body>
 </html>
