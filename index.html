@@ -1,19 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Endless Shooter</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Start Screen Example</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: black; /* Canvas background */
+        }
+        canvas {
+            border: 1px solid white;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="game"></canvas>
-  <div id="gameOverScreen">
-    <h1>Game Over</h1>
-    <p id="finalScore"></p>
-    <p id="highScore"></p>
-    <p>Press Enter or click below to restart</p>
-    <button id="restartBtn">Restart</button>
-  </div>
-  <script src="game.js"></script>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let started = false; // To track the game state
+
+        function drawStartScreen() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            ctx.fillStyle = 'white'; // Set text color to white
+            ctx.font = '32px monospace'; // Set font size and style
+            ctx.textAlign = 'center'; // Center-align the text
+            ctx.fillText('▶ Press Enter to Start', canvas.width / 2, canvas.height / 2 - 40); // Display the start message
+
+            // Instructions for controls
+            ctx.font = '24px monospace'; // Set font size and style for instructions
+            ctx.fillText('Controls:', canvas.width / 2, canvas.height / 2); // Display controls heading
+            ctx.fillText('Move: Arrow keys or WASD', canvas.width / 2, canvas.height / 2 + 40); // Move controls
+            ctx.fillText('Shoot: N', canvas.width / 2, canvas.height / 2 + 70); // Shoot controls
+            ctx.fillText('Special Attack: J (ready after 30 kills)', canvas.width / 2, canvas.height / 2 + 100); // Special attack instructions
+        }
+
+        function startGame() {
+            started = true; // Set the game to started
+            gameLoop(); // Start the game loop
+        }
+
+        function gameLoop() {
+            if (!started) {
+                drawStartScreen();  // Show the start screen if the game hasn't started yet
+                requestAnimationFrame(gameLoop); // Re-renders the game each frame
+                return; // Exit the function to prevent further processing
+            }
+
+            // Here, you can add your game logic
+
+            // Example game logic placeholder
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            ctx.fillStyle = 'green'; // For example, change the background to green for the game
+            ctx.fillRect(0, 0, canvas.width, canvas.height); // Fill the canvas with green
+            ctx.fillStyle = 'white'; // Set the text color
+            ctx.font = '32px monospace'; // Set the font style
+            ctx.fillText('Game Started!', canvas.width / 2, canvas.height / 2); // Show game started message
+
+            requestAnimationFrame(gameLoop); // Continue the game loop
+        }
+
+        // Listen for keypress to start the game
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !started) {
+                startGame(); // Start the game when Enter is pressed
+            }
+        });
+
+        // Start the game loop for the first time
+        gameLoop(); 
+    </script>
 </body>
 </html>
