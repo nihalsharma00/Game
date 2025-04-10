@@ -9,17 +9,14 @@ body {
   height: 100vh;
   touch-action: none;
 }
-
 canvas {
   display: block;
   background-color: #000;
   touch-action: none;
 }
-
 #gameContainer {
   position: relative;
 }
-
 #gameUI {
   position: absolute;
   top: 10px;
@@ -29,18 +26,7 @@ canvas {
   font-size: 14px;
   pointer-events: none;
 }
-
-#gameOverScreen {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
-  display: none;
-}
-
+#gameOverScreen,
 #startScreen {
   position: absolute;
   top: 50%;
@@ -50,21 +36,18 @@ canvas {
   font-family: Arial, sans-serif;
   text-align: center;
 }
-
+#gameOverScreen {
+  display: none;
+}
 #restartButton {
   background-color: #4CAF50;
   border: none;
   color: white;
   padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
   font-size: 16px;
-  margin: 10px 2px;
   cursor: pointer;
   border-radius: 5px;
 }
-
 .instruction {
   margin: 5px 0;
   font-size: 14px;
