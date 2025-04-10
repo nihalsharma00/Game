@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Endless Shooter</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Endless Shooter Game</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <canvas id="game"></canvas>
+
   <div id="gameOverScreen">
     <h1>Game Over</h1>
-    <p id="finalScore"></p>
-    <p id="highScore"></p>
-    <p>Press Enter or click below to restart</p>
+    <p id="finalScore">Score: 0</p>
+    <p id="highScore">High Score: 0</p>
     <button id="restartBtn">Restart</button>
   </div>
+
   <script src="game.js"></script>
 </body>
 </html>
-
