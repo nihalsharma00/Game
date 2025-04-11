@@ -83,6 +83,9 @@ function triggerSpecial() {
 }
 
 function createEnemy() {
+    const maxEnemies = 7 + level * 2; // Level 1 → 7, Level 2 → 9, Level 3 → 11, etc.
+    if (enemies.length >= maxEnemies) return;
+
     const isExplosive = Math.random() < 0.1;
     const size = isExplosive ? 25 : 20;
 
@@ -224,7 +227,12 @@ function handleInput() {
     if (keys["ArrowUp"] || keys["w"]) player.y -= player.speed;
     if (keys["ArrowDown"] || keys["s"]) player.y += player.speed;
     if (keys["n"]) shoot();
+
+    // Clamp position to screen
+    player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+    player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
 }
+
 
 function updateGame() {
     if (!isGameStarted || isGameOver) return;
