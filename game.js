@@ -86,30 +86,42 @@ function createEnemy() {
     const maxEnemies = 7 + level * 2;
     if (enemies.length >= maxEnemies) return;
 
-    const explosiveChance = Math.min(0.1 + level * 0.01, 0.3); // scales with level
+    const explosiveChance = Math.min(0.1 + level * 0.01, 0.3);
     const isExplosive = Math.random() < explosiveChance;
     const size = isExplosive ? 25 : 20;
-
     const offset = 30;
-    const edge = Math.floor(Math.random() * 4);
-    let x, y;
 
-    if (edge === 0) {
-        x = Math.random() * canvas.width;
-        y = -offset;
-    } else if (edge === 1) {
-        x = canvas.width + offset;
-        y = Math.random() * canvas.height;
-    } else if (edge === 2) {
-        x = Math.random() * canvas.width;
-        y = canvas.height + offset;
-    } else {
-        x = -offset;
-        y = Math.random() * canvas.height;
+    let attempts = 0;
+    let x, y, validPosition = false;
+
+    while (!validPosition && attempts < 20) {
+        const edge = Math.floor(Math.random() * 4);
+        if (edge === 0) {
+            x = Math.random() * canvas.width;
+            y = -offset;
+        } else if (edge === 1) {
+            x = canvas.width + offset;
+            y = Math.random() * canvas.height;
+        } else if (edge === 2) {
+            x = Math.random() * canvas.width;
+            y = canvas.height + offset;
+        } else {
+            x = -offset;
+            y = Math.random() * canvas.height;
+        }
+
+        validPosition = !enemies.some(e => {
+            const dist = Math.hypot(x - e.x, y - e.y);
+            return dist < (e.size + size + 10);
+        });
+
+        attempts++;
     }
 
+    if (!validPosition) return;
+
     enemies.push({
-        id: crypto.randomUUID(), // optional unique ID
+        id: crypto.randomUUID(),
         x,
         y,
         size,
@@ -118,11 +130,7 @@ function createEnemy() {
         createdAt: Date.now(),
         exploded: false
     });
-
-    // Debug logging (remove in production)
-    console.log(`Enemy created: ${isExplosive ? "💣 Explosive" : "👾 Normal"} at (${Math.floor(x)}, ${Math.floor(y)})`);
 }
-
 
 function drawPlayer() {
     ctx.fillStyle = "white";
@@ -235,11 +243,9 @@ function handleInput() {
     if (keys["ArrowDown"] || keys["s"]) player.y += player.speed;
     if (keys["n"]) shoot();
 
-    // Clamp position to screen
     player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
     player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
 }
-
 
 function updateGame() {
     if (!isGameStarted || isGameOver) return;
