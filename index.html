@@ -3,24 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Endless Shooter</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Endless Shooter Game</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="startScreen" class="screen">
-    <h1>🚀 Endless Shooter</h1>
-    <p>Press <strong>Enter</strong> or Tap to Start</p>
+  <div id="startScreen">
+    <h1>☢Endless Shooter</h1>
+    <p>Press Enter to Start</p>
   </div>
-
-  <div id="gameOverScreen" class="screen hidden">
-    <h1>Game Over</h1>
-    <p id="finalScore">Score: 0</p>
-    <p id="highScore">High Score: 0</p>
-    <p>Press <strong>Enter</strong> or Tap to Restart</p>
-  </div>
-
   <canvas id="gameCanvas"></canvas>
-
+  <div id="gameOverScreen">
+    <h2>Game Over</h2>
+    <p id="finalScore"></p>
+    <p id="highScore"></p>
+    <p>Press Enter to Restart</p>
+  </div>
   <script src="game.js"></script>
 </body>
 </html>
