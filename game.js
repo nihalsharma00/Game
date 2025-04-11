@@ -83,30 +83,33 @@ function triggerSpecial() {
 }
 
 function createEnemy() {
-    const maxEnemies = 7 + level * 2; // Level 1 → 7, Level 2 → 9, Level 3 → 11, etc.
+    const maxEnemies = 7 + level * 2;
     if (enemies.length >= maxEnemies) return;
 
-    const isExplosive = Math.random() < 0.1;
+    const explosiveChance = Math.min(0.1 + level * 0.01, 0.3); // scales with level
+    const isExplosive = Math.random() < explosiveChance;
     const size = isExplosive ? 25 : 20;
 
+    const offset = 30;
     const edge = Math.floor(Math.random() * 4);
     let x, y;
 
     if (edge === 0) {
         x = Math.random() * canvas.width;
-        y = 0;
+        y = -offset;
     } else if (edge === 1) {
-        x = canvas.width;
+        x = canvas.width + offset;
         y = Math.random() * canvas.height;
     } else if (edge === 2) {
         x = Math.random() * canvas.width;
-        y = canvas.height;
+        y = canvas.height + offset;
     } else {
-        x = 0;
+        x = -offset;
         y = Math.random() * canvas.height;
     }
 
     enemies.push({
+        id: crypto.randomUUID(), // optional unique ID
         x,
         y,
         size,
@@ -115,7 +118,11 @@ function createEnemy() {
         createdAt: Date.now(),
         exploded: false
     });
+
+    // Debug logging (remove in production)
+    console.log(`Enemy created: ${isExplosive ? "💣 Explosive" : "👾 Normal"} at (${Math.floor(x)}, ${Math.floor(y)})`);
 }
+
 
 function drawPlayer() {
     ctx.fillStyle = "white";
