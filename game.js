@@ -83,7 +83,7 @@ function triggerSpecial() {
 }
 
 function createEnemy() {
-    const maxEnemies = 7 + level * 2;
+    const maxEnemies = 7 + level * 1;
     if (enemies.length >= maxEnemies) return;
 
     const explosiveChance = Math.min(0.1 + level * 0.01, 0.3);
@@ -125,7 +125,7 @@ function createEnemy() {
         x,
         y,
         size,
-        speed: isExplosive ? enemySpeed * 0.8 : enemySpeed,
+        speed: isExplosive ? enemySpeed * 0.6 : enemySpeed,
         isExplosive,
         createdAt: Date.now(),
         exploded: false
