@@ -18,20 +18,55 @@ canvas {
 }
 
 #startScreen,
-#gameOverScreen {
+#gameOverScreen,
+#pauseScreen {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
   color: white;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 30px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 30px 40px;
   border: 2px solid white;
   border-radius: 10px;
   z-index: 10;
+  max-width: 90vw;
+  box-shadow: 0 0 20px white;
 }
 
 #gameOverScreen {
   display: none;
+}
+
+button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-family: monospace;
+  font-size: 1rem;
+  cursor: pointer;
+  background: none;
+  border: 2px solid white;
+  border-radius: 6px;
+  color: white;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+button:hover, button:focus {
+  background-color: white;
+  color: black;
+  outline: none;
+}
+
+@media (max-width: 600px) {
+  #startScreen,
+  #gameOverScreen,
+  #pauseScreen {
+    padding: 20px;
+  }
+
+  button {
+    font-size: 0.9rem;
+    padding: 9px 18px;
+  }
 }
