@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>2D Shooter Game</title>
+  <title>2D Shooter Game with Terrains</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <canvas id="gameCanvas"></canvas>
 
   <div id="hud">
@@ -15,9 +16,22 @@
     <div id="lives-display">Lives: 3</div>
     <div id="kills-display">Kills: 0</div>
     <div id="special-status">Special: LOCKED</div>
+    <div id="terrain-display">Terrain: None</div>
   </div>
 
-  <div id="startScreen">
+  <!-- Terrain Selection Screen -->
+  <div id="terrainScreen">
+    <h1>Select Your Terrain</h1>
+    <div id="terrainOptions">
+      <button class="terrain-btn" data-terrain="forest">Forest</button>
+      <button class="terrain-btn" data-terrain="ice">Ice</button>
+      <button class="terrain-btn" data-terrain="sahara">Sahara</button>
+      <button class="terrain-btn" data-terrain="volcano">Volcano</button>
+      <button class="terrain-btn" data-terrain="city">City</button>
+    </div>
+  </div>
+
+  <div id="startScreen" style="display:none;">
     <h1>2D Shooter Game</h1>
     <p>Use arrow keys or WASD to move</p>
     <p>Press N or click/touch to shoot</p>
@@ -25,7 +39,7 @@
     <p>Press Enter to start</p>
   </div>
 
-  <div id="gameOverScreen">
+  <div id="gameOverScreen" style="display:none;">
     <h2>Game Over</h2>
     <p id="finalScore">Score: 0</p>
     <p id="highScore">High Score: 0</p>
