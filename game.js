@@ -4,7 +4,12 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// PLAYER
+// -------------------
+// GAME VARIABLES
+// -------------------
+
+let terrain = null;
+
 let player = {
   x: canvas.width / 2,
   y: canvas.height - 60,
@@ -14,12 +19,12 @@ let player = {
   directionAngle: 0,
 };
 
-// GAME STATE
 let bullets = [];
 let specialBullets = [];
 let enemies = [];
 let explosions = [];
 let powerUps = [];
+let particles = [];
 
 let score = 0;
 let level = 1;
@@ -40,17 +45,58 @@ let enemySpeed = 1;
 let highScore = localStorage.getItem("highScore") || 0;
 let touchStart = null;
 
-const specialCooldownDuration = 15000; // 15 sec cooldown
-const powerUpDuration = 6000; // 6 sec to collect power-up
+const specialCooldownDuration = 15000;
+const powerUpDuration = 6000;
 
-// Effect timers
 let freezeTimer = 0;
 let rapidFireTimer = 0;
 let swiftShadowTimer = 0;
 const originalFireRate = fireRate;
 const originalSpeed = player.speed;
 
-// Power-up definitions
+const terrainSettings = {
+  forest: {
+    background: ["#1c3420", "#0d1a0d"],
+    enemyColor: "lime",
+    enemySpeedMultiplier: 1,
+    particleColor: "rgba(34,139,34,0.15)",
+    particleCount: 70,
+    particleType: "leaf",
+  },
+  ice: {
+    background: ["#a5d8ff", "#040d21"],
+    enemyColor: "#99ccff",
+    enemySpeedMultiplier: 0.75,
+    particleColor: "rgba(250, 250, 255, 0.3)",
+    particleCount: 80,
+    particleType: "snow",
+  },
+  sahara: {
+    background: ["#f0d9a6", "#855e0f"],
+    enemyColor: "#d6a941",
+    enemySpeedMultiplier: 1.3,
+    particleColor: "rgba(244, 196, 48, 0.25)",
+    particleCount: 60,
+    particleType: "dust",
+  },
+  volcano: {
+    background: ["#7b0f0f", "#220a0a"],
+    enemyColor: "#ff4500",
+    enemySpeedMultiplier: 1.1,
+    particleColor: "rgba(255, 69, 0, 0.25)",
+    particleCount: 75,
+    particleType: "ember",
+  },
+  city: {
+    background: ["#1b1b1b", "#121212"],
+    enemyColor: "#00ffff",
+    enemySpeedMultiplier: 1,
+    particleColor: "rgba(0, 255, 255, 0.2)",
+    particleCount: 65,
+    particleType: "rain",
+  },
+};
+
 const powerUpTypes = [
   {
     name: "Time Freeze",
@@ -92,8 +138,21 @@ const sounds = {
 // -------------------
 // EVENT LISTENERS
 // -------------------
+
+document.getElementById("restartBtn").addEventListener("click", restartGame);
+
+document.querySelectorAll(".terrain-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    terrain = btn.dataset.terrain;
+    document.getElementById("terrainScreen").style.display = "none";
+    document.getElementById("startScreen").style.display = "block";
+    document.getElementById("terrain-display").textContent = `Terrain: ${terrain}`;
+  });
+});
+
 document.addEventListener("keydown", (e) => {
   keys[e.key] = true;
+
   if (!isGameStarted && e.key === "Enter") startGame();
   else if (isGameOver && e.key === "Enter") restartGame();
   else if (e.key === "j" && specialAttackReady && !specialCooldown)
@@ -127,40 +186,23 @@ window.addEventListener("resize", () => {
   player.y = canvas.height - 60;
 });
 
-document.getElementById("restartBtn").addEventListener("click", restartGame);
-
 // -------------------
-// FUNCTIONS
+// GAME FUNCTIONS
 // -------------------
 
-function shoot() {
-  const now = Date.now();
-  if ((now - lastBulletTime) / 1000 >= fireRate) {
-    bullets.push({ x: player.x, y: player.y, size: 5, speed: 9 });
-    lastBulletTime = now;
-    playSound("shoot");
-  }
+function lerp(a, b, t) {
+  return a + (b - a) * t;
 }
 
-function triggerSpecial() {
-  specialAttackReady = false;
-  specialCooldown = true;
-  kills = 0;
-  playSound("special");
-  let angle = 0;
-  const count = Math.floor(50 + level * 2);
-  for (let i = 0; i < count; i++) {
-    const rad = (angle * Math.PI) / 180;
-    specialBullets.push({
-      x: player.x,
-      y: player.y,
-      dx: Math.cos(rad) * 7,
-      dy: Math.sin(rad) * 7,
-      size: 4,
-    });
-    angle += 360 / count;
-  }
-  setTimeout(() => (specialCooldown = false), specialCooldownDuration);
+function drawBackground() {
+  if (!terrain) return;
+
+  const bg = terrainSettings[terrain].background;
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, bg[0]);
+  gradient.addColorStop(1, bg[1]);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function createEnemy() {
@@ -192,7 +234,6 @@ function createEnemy() {
     }
 
     const distToPlayer = Math.hypot(x - player.x, y - player.y);
-    // Prevent enemy spawn within 4x player's size radius from player
     if (distToPlayer <= player.size * 4) {
       attempts++;
       continue;
@@ -206,13 +247,15 @@ function createEnemy() {
   }
 
   if (!validPosition) {
-    // fallback: random spawn outside 4x player's size
     let tries = 0;
     do {
       x = Math.random() * canvas.width;
       y = Math.random() * canvas.height;
       tries++;
-    } while (Math.hypot(x - player.x, y - player.y) <= player.size * 4 && tries < 30);
+    } while (
+      Math.hypot(x - player.x, y - player.y) <= player.size * 4 &&
+      tries < 30
+    );
   }
 
   enemies.push({
@@ -220,11 +263,43 @@ function createEnemy() {
     x,
     y,
     size,
-    speed: isExplosive ? enemySpeed * 0.6 : enemySpeed,
+    speed:
+      (terrainSettings[terrain]?.enemySpeedMultiplier || 1) *
+      (isExplosive ? enemySpeed * 0.6 : enemySpeed),
     isExplosive,
     createdAt: Date.now(),
     exploded: false,
   });
+}
+
+function shoot() {
+  const now = Date.now();
+  if ((now - lastBulletTime) / 1000 >= fireRate) {
+    bullets.push({ x: player.x, y: player.y, size: 5, speed: 9 });
+    lastBulletTime = now;
+    playSound("shoot");
+  }
+}
+
+function triggerSpecial() {
+  specialAttackReady = false;
+  specialCooldown = true;
+  kills = 0;
+  playSound("special");
+  let angle = 0;
+  const count = Math.floor(50 + level * 2);
+  for (let i = 0; i < count; i++) {
+    const rad = (angle * Math.PI) / 180;
+    specialBullets.push({
+      x: player.x,
+      y: player.y,
+      dx: Math.cos(rad) * 7,
+      dy: Math.sin(rad) * 7,
+      size: 4,
+    });
+    angle += 360 / count;
+  }
+  setTimeout(() => (specialCooldown = false), specialCooldownDuration);
 }
 
 function increaseDropRates() {
@@ -235,7 +310,7 @@ function increaseDropRates() {
 
 function increaseScore(isSpecial) {
   if (isSpecial) {
-    score += 150; // 1.5x base score
+    score += 150;
     increaseDropRates();
 
     const dropChance = Math.random();
@@ -328,13 +403,10 @@ function drawPlayer() {
   ctx.fill();
 }
 
-function drawUI() {
-  // HUD is handled by DOM, updateHUD() is called instead
-}
-
 function drawEnemies() {
   enemies.forEach((e) => {
-    ctx.fillStyle = e.isExplosive ? "red" : "lime";
+    ctx.fillStyle =
+      terrainSettings[terrain]?.enemyColor || (e.isExplosive ? "red" : "lime");
     ctx.beginPath();
     ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
     ctx.fill();
@@ -361,14 +433,74 @@ function drawExplosions() {
   });
 }
 
+// PARTICLES: simple atmospheric particles (snow, leaves, dust, ember, rain)
+function createParticles() {
+  if (!terrain) return;
+  const settings = terrainSettings[terrain];
+  const count = settings.particleCount;
+  const color = settings.particleColor;
+  const type = settings.particleType;
+
+  while (particles.length < count) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 3 + 1,
+      speedY: (type === "snow" ? 0.5 : type === "rain" ? 4 : Math.random() * 0.7 + 0.3),
+      speedX: (type === "leaf" ? (Math.random() - 0.5) * 0.2 : 0),
+      type,
+      opacity: Math.random() * 0.4 + 0.2,
+      color,
+    });
+  }
+}
+
+function updateParticles() {
+  particles.forEach((p) => {
+    p.x += p.speedX;
+    p.y += p.speedY;
+    if (p.y > canvas.height) p.y = -10;
+    if (p.x > canvas.width) p.x = 0;
+    if (p.x < 0) p.x = canvas.width;
+  });
+}
+
+function drawParticles() {
+  particles.forEach((p) => {
+    ctx.fillStyle = p.color;
+    switch (p.type) {
+      case "snow":
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case "rain":
+        ctx.beginPath();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - 1, p.y + 10);
+        ctx.stroke();
+        break;
+      case "leaf":
+      case "dust":
+      case "ember":
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.size * 1.5, p.size, 0, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+    }
+  });
+}
+
 function moveEnemies() {
-  if (freezeTimer > 0) return; // freeze enemies
+  if (freezeTimer > 0) return;
 
   enemies.forEach((e) => {
     const dx = player.x - e.x;
     const dy = player.y - e.y;
     const dist = Math.hypot(dx, dy);
-    if (dist === 0) return; // prevent div by zero
+    if (dist === 0) return;
 
     e.x += (dx / dist) * e.speed;
     e.y += (dy / dist) * e.speed;
@@ -464,16 +596,26 @@ function updateHUD() {
   document.getElementById("level-display").textContent = `Level: ${level}`;
   document.getElementById("lives-display").textContent = `Lives: ${lives}`;
   document.getElementById("kills-display").textContent = `Kills: ${kills}`;
-  let specialText = "LOCKED";
-  if (specialAttackReady) specialText = "READY";
-  else if (specialCooldown) specialText = "COOLDOWN";
+  const specialText = specialAttackReady
+    ? "READY"
+    : specialCooldown
+    ? "COOLDOWN"
+    : "LOCKED";
   document.getElementById("special-status").textContent = `Special: ${specialText}`;
+  document.getElementById("terrain-display").textContent = `Terrain: ${terrain}`;
 }
 
 function updateGame() {
   if (!isGameStarted || isGameOver || isPaused) return;
 
+  drawBackground();
+  updateParticles();
+  createParticles();
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background drawn by drawBackground before clearRect clears canvas though, so clearRect is optionally removable
+
   handleInput();
 
   moveEnemies();
@@ -487,8 +629,8 @@ function updateGame() {
   drawEnemies();
   drawExplosions();
   drawPowerUps();
+  drawParticles();
 
-  // Reset effects after timers expire
   if (freezeTimer > 0) freezeTimer -= 16;
   if (rapidFireTimer > 0) rapidFireTimer -= 16;
   else fireRate = originalFireRate;
@@ -513,11 +655,17 @@ function updateGame() {
 }
 
 function startGame() {
+  if (!terrain) {
+    alert("Please select a terrain first!");
+    return;
+  }
+
   isGameStarted = true;
   isGameOver = false;
   isPaused = false;
   document.getElementById("startScreen").style.display = "none";
   document.getElementById("gameOverScreen").style.display = "none";
+  document.getElementById("terrainScreen").style.display = "none";
   document.getElementById("pauseScreen").style.display = "none";
 
   setInterval(() => {
@@ -543,6 +691,7 @@ function restartGame() {
   enemies = [];
   explosions = [];
   powerUps = [];
+  particles = [];
   score = 0;
   level = 1;
   lives = 3;
@@ -555,9 +704,11 @@ function restartGame() {
   isGameStarted = true;
   isPaused = false;
 
+  // Keep terrain selected
   document.getElementById("gameOverScreen").style.display = "none";
   document.getElementById("pauseScreen").style.display = "none";
 
+  updateHUD();
   updateGame();
 }
 
