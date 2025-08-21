@@ -1,10 +1,9 @@
-/* Reset and base styles */
+/* Base Reset and Styling */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 html, body {
   width: 100%;
   height: 100%;
@@ -15,90 +14,12 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-/* Canvas fills full screen */
 canvas {
   display: block;
-  background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+  background: transparent; /* Background handled in JS for terrains */
 }
 
-/* Overlay containers */
-#startScreen,
-#gameOverScreen,
-#pauseScreen {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 320px;
-  max-width: 90vw;
-  background: linear-gradient(145deg, #222, #191919);
-  border-radius: 15px;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
-  padding: 40px 30px;
-  text-align: center;
-  color: #f0f0f0;
-  z-index: 100;
-  user-select: none;
-}
-
-/* Headings with subtle glow */
-#startScreen h1,
-#gameOverScreen h2,
-#pauseScreen h2 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-  color: #ffcc00;
-  text-shadow: 0 0 10px #ffcc00aa;
-}
-
-/* Paragraph text */
-#startScreen p,
-#gameOverScreen p,
-#pauseScreen p {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #bbb;
-  margin-bottom: 15px;
-}
-
-/* Score text on game over */
-#finalScore,
-#highScore {
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: #ffcc00;
-  margin-top: 10px;
-}
-
-/* Button styles */
-button {
-  cursor: pointer;
-  margin-top: 25px;
-  padding: 10px 30px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #222;
-  background: #ffcc00;
-  border: none;
-  border-radius: 30px;
-  box-shadow:
-    0 4px 8px rgba(255, 204, 0, 0.6),
-    inset 0 -3px 6px rgba(255, 204, 0, 0.8);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
-}
-
-button:hover,
-button:focus {
-  background-color: #e6b800;
-  box-shadow:
-    0 6px 12px rgba(230, 184, 0, 0.9),
-    inset 0 -3px 6px rgba(230, 184, 0, 1);
-  outline: none;
-}
-
-/* UI text display on top-left during gameplay */
+/* HUD */
 #hud {
   position: fixed;
   top: 15px;
@@ -115,36 +36,101 @@ button:focus {
   gap: 25px;
   max-width: 90vw;
 }
-
-/* Individual HUD element styling */
 #hud div {
   background: #222;
   padding: 8px 15px;
   border-radius: 20px;
   box-shadow: 0 3px 8px #000c;
 }
-
-/* Special indicator colored text */
 #special-status {
   color: #00d9ff;
   font-weight: 700;
   text-shadow: 0 0 8px #00d9ffcc;
 }
 
-/* Responsive UI adjustments */
+/* Overlay Styling (Terrain Select, Start, Game Over, Pause) */
+#terrainScreen,
+#startScreen,
+#gameOverScreen,
+#pauseScreen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px;
+  max-width: 90vw;
+  background: linear-gradient(145deg, #222, #191919);
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+  padding: 40px 30px;
+  text-align: center;
+  color: #f0f0f0;
+  z-index: 100;
+  user-select: none;
+}
+#terrainScreen h1,
+#startScreen h1,
+#gameOverScreen h2,
+#pauseScreen h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #ffcc00;
+  text-shadow: 0 0 10px #ffcc00aa;
+}
+#terrainScreen #terrainOptions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+button {
+  cursor: pointer;
+  margin-top: 15px;
+  padding: 10px 22px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+  background: #ffcc00;
+  border: none;
+  border-radius: 30px;
+  box-shadow:
+    0 4px 8px rgba(255, 204, 0, 0.6),
+    inset 0 -3px 6px rgba(255, 204, 0, 0.8);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  min-width: 100px;
+  text-transform: capitalize;
+}
+button:hover,
+button:focus {
+  background-color: #e6b800;
+  box-shadow:
+    0 6px 12px rgba(230, 184, 0, 0.9),
+    inset 0 -3px 6px rgba(230, 184, 0, 1);
+  outline: none;
+}
+#finalScore,
+#highScore {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #ffcc00;
+  margin-top: 10px;
+}
+
+/* Responsive */
 @media (max-width: 450px) {
+  #terrainScreen,
   #startScreen,
   #gameOverScreen,
   #pauseScreen {
     width: 280px;
     padding: 35px 25px;
   }
-
   button {
     padding: 8px 24px;
     font-size: 1rem;
+    min-width: 80px;
   }
-
   #hud {
     font-size: 0.9rem;
     gap: 15px;
