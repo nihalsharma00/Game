@@ -2,25 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Endless Shooter Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2D Shooter Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="startScreen">
-    <h1>☢Endless Shooter</h1>
-    <p>Press Enter to Start <br>
-       WASD & arrow keys to move <br>
-       N to shoot <br>
-       J to special attack</p>
-  </div>
   <canvas id="gameCanvas"></canvas>
+
+  <div id="startScreen">
+    <h1>2D Shooter Game</h1>
+    <p>Use arrow keys or WASD to move</p>
+    <p>Press N or click/touch to shoot</p>
+    <p>Press J for special attack when ready</p>
+    <p>Press Enter to start</p>
+  </div>
+
   <div id="gameOverScreen">
     <h2>Game Over</h2>
-    <p id="finalScore"></p>
-    <p id="highScore"></p>
-    <p>Press Enter to Restart</p>
+    <p id="finalScore">Score: 0</p>
+    <p id="highScore">High Score: 0</p>
+    <button id="restartBtn">Restart</button>
   </div>
+
+  <div id="pauseScreen" style="display:none;">
+    <h2>Paused</h2>
+    <p>Press P to resume</p>
+  </div>
+
   <script src="game.js"></script>
 </body>
 </html>
