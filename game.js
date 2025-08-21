@@ -1,29 +1,72 @@
-// Add to top of game.js:
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// PLAYER
+let player = {
+  x: canvas.width / 2,
+  y: canvas.height - 60,
+  size: 20,
+  speed: 5,
+  color: "white",
+  directionAngle: 0,
+};
+
+// GAME STATE
+let bullets = [];
+let specialBullets = [];
+let enemies = [];
+let explosions = [];
 let powerUps = [];
-let powerUpDuration = 6000; // 6 seconds to collect drop
+
+let score = 0;
+let level = 1;
+let lives = 3;
+let kills = 0;
+
+let isGameOver = false;
+let isGameStarted = false;
+let isPaused = false;
+
+let specialAttackReady = false;
+let specialCooldown = false;
+
+let keys = {};
+let lastBulletTime = 0;
+let fireRate = 0.6;
+let enemySpeed = 1;
+let highScore = localStorage.getItem("highScore") || 0;
+let touchStart = null;
+
+const specialCooldownDuration = 15000; // 15 sec cooldown
+const powerUpDuration = 6000; // 6 sec to collect power-up
+
+// Effect timers
 let freezeTimer = 0;
 let rapidFireTimer = 0;
 let swiftShadowTimer = 0;
-let originalFireRate = fireRate;
-let originalSpeed = player.speed;
+const originalFireRate = fireRate;
+const originalSpeed = player.speed;
 
-// Define power-up types with effects and drop rates
+// Power-up definitions
 const powerUpTypes = [
   {
     name: "Time Freeze",
     effect: () => {
       freezeTimer = 4000;
     },
-    dropRate: 0.05, // 5%
+    dropRate: 0.05,
     color: "blue",
   },
   {
     name: "Rapid Fire",
     effect: () => {
       rapidFireTimer = 6000;
-      fireRate = originalFireRate / 2; // double fire speed
+      fireRate = originalFireRate / 2;
     },
-    dropRate: 0.08, // 8%
+    dropRate: 0.08,
     color: "red",
   },
   {
@@ -32,12 +75,94 @@ const powerUpTypes = [
       swiftShadowTimer = 6000;
       player.speed = originalSpeed * 1.5;
     },
-    dropRate: 0.07, // 7%
+    dropRate: 0.07,
     color: "purple",
   },
 ];
 
-// Modify createEnemy() spawn position check to avoid near player position (4x player.size)
+// SOUNDS
+const sounds = {
+  shoot: new Audio("https://freesound.org/data/previews/320/320181_5260877-lq.mp3"),
+  explosion: new Audio("https://freesound.org/data/previews/178/178186_2859974-lq.mp3"),
+  hurt: new Audio("https://freesound.org/data/previews/191/191839_2394245-lq.mp3"),
+  levelUp: new Audio("https://freesound.org/data/previews/466/466080_10152444-lq.mp3"),
+  special: new Audio("https://freesound.org/data/previews/331/331912_3248244-lq.mp3"),
+};
+
+// -------------------
+// EVENT LISTENERS
+// -------------------
+document.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+  if (!isGameStarted && e.key === "Enter") startGame();
+  else if (isGameOver && e.key === "Enter") restartGame();
+  else if (e.key === "j" && specialAttackReady && !specialCooldown)
+    triggerSpecial();
+  else if (e.key === "p" && isGameStarted && !isGameOver) togglePause();
+});
+
+document.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+canvas.addEventListener("mousedown", () => {
+  if (!isPaused && isGameStarted && !isGameOver) shoot();
+});
+document.addEventListener("touchstart", (e) => {
+  if (!isPaused && isGameStarted && !isGameOver) shoot();
+  touchStart = e.touches[0];
+});
+document.addEventListener("touchmove", (e) => {
+  if (!touchStart) return;
+  const touch = e.touches;
+  const dx = touch.clientX - touchStart.clientX;
+  const dy = touch.clientY - touchStart.clientY;
+  player.x += dx * 0.15;
+  player.y += dy * 0.15;
+  touchStart = touch;
+});
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  player.x = canvas.width / 2;
+  player.y = canvas.height - 60;
+});
+
+document.getElementById("restartBtn").addEventListener("click", restartGame);
+
+// -------------------
+// FUNCTIONS
+// -------------------
+
+function shoot() {
+  const now = Date.now();
+  if ((now - lastBulletTime) / 1000 >= fireRate) {
+    bullets.push({ x: player.x, y: player.y, size: 5, speed: 9 });
+    lastBulletTime = now;
+    playSound("shoot");
+  }
+}
+
+function triggerSpecial() {
+  specialAttackReady = false;
+  specialCooldown = true;
+  kills = 0;
+  playSound("special");
+  let angle = 0;
+  const count = Math.floor(50 + level * 2);
+  for (let i = 0; i < count; i++) {
+    const rad = (angle * Math.PI) / 180;
+    specialBullets.push({
+      x: player.x,
+      y: player.y,
+      dx: Math.cos(rad) * 7,
+      dy: Math.sin(rad) * 7,
+      size: 4,
+    });
+    angle += 360 / count;
+  }
+  setTimeout(() => (specialCooldown = false), specialCooldownDuration);
+}
+
 function createEnemy() {
   const maxEnemies = 7 + level * 1;
   if (enemies.length >= maxEnemies) return;
@@ -67,7 +192,7 @@ function createEnemy() {
     }
 
     const distToPlayer = Math.hypot(x - player.x, y - player.y);
-    // Check distance from player > 4 * player size
+    // Prevent enemy spawn within 4x player's size radius from player
     if (distToPlayer <= player.size * 4) {
       attempts++;
       continue;
@@ -81,7 +206,7 @@ function createEnemy() {
   }
 
   if (!validPosition) {
-    // fallback: spawn anywhere outside obvious immediate near player
+    // fallback: random spawn outside 4x player's size
     let tries = 0;
     do {
       x = Math.random() * canvas.width;
@@ -102,16 +227,22 @@ function createEnemy() {
   });
 }
 
-// Modify score increase and special (explosive enemy) kill logic to give 1.5x score + chance to drop power-up
+function increaseDropRates() {
+  powerUpTypes.forEach((powerUp) => {
+    powerUp.dropRate = Math.min(powerUp.dropRate + 0.005, 0.15);
+  });
+}
+
 function increaseScore(isSpecial) {
   if (isSpecial) {
-    score += 150; // 1.5x 100
-    // Attempt power-up drop
+    score += 150; // 1.5x base score
+    increaseDropRates();
+
     const dropChance = Math.random();
-    let dropTotal = 0;
+    let cumulative = 0;
     for (const powerUp of powerUpTypes) {
-      dropTotal += powerUp.dropRate;
-      if (dropChance <= dropTotal) {
+      cumulative += powerUp.dropRate;
+      if (dropChance <= cumulative) {
         dropPowerUp(powerUp);
         break;
       }
@@ -124,7 +255,6 @@ function increaseScore(isSpecial) {
   if (kills >= 20 && !specialCooldown) specialAttackReady = true;
 }
 
-// Function to spawn a power-up drop at position
 function dropPowerUp(powerUp) {
   powerUps.push({
     id: crypto.randomUUID(),
@@ -136,7 +266,6 @@ function dropPowerUp(powerUp) {
   });
 }
 
-// Draw power-ups on canvas
 function drawPowerUps() {
   powerUps.forEach((pu) => {
     ctx.fillStyle = pu.type.color;
@@ -151,19 +280,16 @@ function drawPowerUps() {
   });
 }
 
-// Update power-ups: remove expired, check collection
 function updatePowerUps() {
   const now = Date.now();
 
   for (let i = powerUps.length - 1; i >= 0; i--) {
     const pu = powerUps[i];
-    // Remove power-up after 6s
     if (now - pu.createdAt > powerUpDuration) {
       powerUps.splice(i, 1);
       continue;
     }
 
-    // Check collection by player
     if (Math.hypot(pu.x - player.x, pu.y - player.y) < pu.size + player.size) {
       collectPowerUp(pu.type);
       powerUps.splice(i, 1);
@@ -171,13 +297,91 @@ function updatePowerUps() {
   }
 }
 
-// When player collects power-up, activate the corresponding effect
 function collectPowerUp(type) {
   playSound("special");
   type.effect();
 }
 
-// Modify checkCollisions to call increaseScore(true) on special enemy kill and add all new draw/update calls in game loop
+function drawPlayer() {
+  ctx.fillStyle = player.color;
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+  ctx.fill();
+
+  const dirRad = (player.directionAngle * Math.PI) / 180;
+  const pointerSize = player.size + 12;
+  const tipX = player.x + Math.cos(dirRad) * pointerSize;
+  const tipY = player.y + Math.sin(dirRad) * pointerSize;
+
+  ctx.fillStyle = "cyan";
+  ctx.beginPath();
+  ctx.moveTo(tipX, tipY);
+  ctx.lineTo(
+    player.x + Math.cos(dirRad + Math.PI * 0.8) * (player.size * 0.6),
+    player.y + Math.sin(dirRad + Math.PI * 0.8) * (player.size * 0.6)
+  );
+  ctx.lineTo(
+    player.x + Math.cos(dirRad - Math.PI * 0.8) * (player.size * 0.6),
+    player.y + Math.sin(dirRad - Math.PI * 0.8) * (player.size * 0.6)
+  );
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawUI() {
+  // HUD is handled by DOM, updateHUD() is called instead
+}
+
+function drawEnemies() {
+  enemies.forEach((e) => {
+    ctx.fillStyle = e.isExplosive ? "red" : "lime";
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawBullets() {
+  ctx.fillStyle = "yellow";
+  bullets.forEach((b) =>
+    ctx.fillRect(b.x - b.size / 2, b.y - b.size / 2, b.size, b.size)
+  );
+  ctx.fillStyle = "cyan";
+  specialBullets.forEach((b) =>
+    ctx.fillRect(b.x - b.size / 2, b.y - b.size / 2, b.size, b.size)
+  );
+}
+
+function drawExplosions() {
+  explosions.forEach((ex) => {
+    ctx.strokeStyle = "orange";
+    ctx.beginPath();
+    ctx.arc(ex.x, ex.y, ex.radius, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+}
+
+function moveEnemies() {
+  if (freezeTimer > 0) return; // freeze enemies
+
+  enemies.forEach((e) => {
+    const dx = player.x - e.x;
+    const dy = player.y - e.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist === 0) return; // prevent div by zero
+
+    e.x += (dx / dist) * e.speed;
+    e.y += (dy / dist) * e.speed;
+  });
+}
+
+function moveBullets() {
+  bullets.forEach((b) => (b.y -= b.speed));
+  specialBullets.forEach((b) => {
+    b.x += b.dx;
+    b.y += b.dy;
+  });
+}
 
 function checkCollisions() {
   enemies.forEach((e, ei) => {
@@ -191,19 +395,19 @@ function checkCollisions() {
 
     bullets.forEach((b, bi) => {
       if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
-        const specialKill = e.isExplosive;
+        const isSpecialKill = e.isExplosive;
         enemies.splice(ei, 1);
         bullets.splice(bi, 1);
-        increaseScore(specialKill);
+        increaseScore(isSpecialKill);
       }
     });
 
     specialBullets.forEach((b, bi) => {
       if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
-        const specialKill = e.isExplosive;
+        const isSpecialKill = e.isExplosive;
         enemies.splice(ei, 1);
         specialBullets.splice(bi, 1);
-        increaseScore(specialKill);
+        increaseScore(isSpecialKill);
       }
     });
 
@@ -223,22 +427,56 @@ function checkCollisions() {
   });
 }
 
-// Update game loop to handle power-ups and their timers, and freeze enemies if freezeTimer active
+function loseLife() {
+  lives--;
+  playSound("hurt");
+  if (lives <= 0) gameOver();
+}
+
+function handleInput() {
+  if (isPaused) return;
+
+  if (keys["ArrowLeft"] || keys["a"]) {
+    player.x -= player.speed;
+    player.directionAngle = 180;
+  }
+  if (keys["ArrowRight"] || keys["d"]) {
+    player.x += player.speed;
+    player.directionAngle = 0;
+  }
+  if (keys["ArrowUp"] || keys["w"]) {
+    player.y -= player.speed;
+    player.directionAngle = 270;
+  }
+  if (keys["ArrowDown"] || keys["s"]) {
+    player.y += player.speed;
+    player.directionAngle = 90;
+  }
+
+  if (keys["n"]) shoot();
+
+  player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+  player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+}
+
+function updateHUD() {
+  document.getElementById("score-display").textContent = `Score: ${score}`;
+  document.getElementById("level-display").textContent = `Level: ${level}`;
+  document.getElementById("lives-display").textContent = `Lives: ${lives}`;
+  document.getElementById("kills-display").textContent = `Kills: ${kills}`;
+  let specialText = "LOCKED";
+  if (specialAttackReady) specialText = "READY";
+  else if (specialCooldown) specialText = "COOLDOWN";
+  document.getElementById("special-status").textContent = `Special: ${specialText}`;
+}
 
 function updateGame() {
   if (!isGameStarted || isGameOver || isPaused) return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   handleInput();
 
-  // Freeze enemies if freeze active
-  if (freezeTimer > 0) {
-    freezeTimer -= 16;
-  } else {
-    moveEnemies();
-  }
-
+  moveEnemies();
   moveBullets();
   checkCollisions();
 
@@ -249,20 +487,13 @@ function updateGame() {
   drawEnemies();
   drawExplosions();
   drawPowerUps();
-  drawUI();
 
-  // Reset effects once their timers expire
-  if (rapidFireTimer > 0) {
-    rapidFireTimer -= 16;
-  } else {
-    fireRate = originalFireRate;
-  }
-
-  if (swiftShadowTimer > 0) {
-    swiftShadowTimer -= 16;
-  } else {
-    player.speed = originalSpeed;
-  }
+  // Reset effects after timers expire
+  if (freezeTimer > 0) freezeTimer -= 16;
+  if (rapidFireTimer > 0) rapidFireTimer -= 16;
+  else fireRate = originalFireRate;
+  if (swiftShadowTimer > 0) swiftShadowTimer -= 16;
+  else player.speed = originalSpeed;
 
   bullets = bullets.filter((b) => b.y > -20);
   specialBullets = specialBullets.filter(
@@ -275,5 +506,75 @@ function updateGame() {
     fireRate = Math.max(0.2, fireRate * 0.9);
     playSound("levelUp");
   }
+
+  updateHUD();
+
   requestAnimationFrame(updateGame);
+}
+
+function startGame() {
+  isGameStarted = true;
+  isGameOver = false;
+  isPaused = false;
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("gameOverScreen").style.display = "none";
+  document.getElementById("pauseScreen").style.display = "none";
+
+  setInterval(() => {
+    if (!isPaused && !isGameOver && isGameStarted) createEnemy();
+  }, 1000);
+
+  updateGame();
+}
+
+function gameOver() {
+  isGameOver = true;
+  highScore = Math.max(score, highScore);
+  localStorage.setItem("highScore", highScore);
+  document.getElementById("finalScore").textContent = `Score: ${score}`;
+  document.getElementById("highScore").textContent = `High Score: ${highScore}`;
+  document.getElementById("gameOverScreen").style.display = "block";
+}
+
+function restartGame() {
+  player = { x: canvas.width / 2, y: canvas.height - 60, size: 20, speed: 5, color: "white", directionAngle: 0 };
+  bullets = [];
+  specialBullets = [];
+  enemies = [];
+  explosions = [];
+  powerUps = [];
+  score = 0;
+  level = 1;
+  lives = 3;
+  kills = 0;
+  enemySpeed = 1;
+  fireRate = 0.6;
+  specialAttackReady = false;
+  specialCooldown = false;
+  isGameOver = false;
+  isGameStarted = true;
+  isPaused = false;
+
+  document.getElementById("gameOverScreen").style.display = "none";
+  document.getElementById("pauseScreen").style.display = "none";
+
+  updateGame();
+}
+
+function togglePause() {
+  isPaused = !isPaused;
+  const pauseUI = document.getElementById("pauseScreen");
+  if (isPaused) {
+    pauseUI.style.display = "block";
+  } else {
+    pauseUI.style.display = "none";
+    updateGame();
+  }
+}
+
+function playSound(name) {
+  if (!sounds[name]) return;
+  sounds[name].pause();
+  sounds[name].currentTime = 0;
+  sounds[name].play().catch(() => {});
 }
