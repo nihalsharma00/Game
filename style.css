@@ -1,3 +1,4 @@
+/* Reset and base styles */
 * {
   margin: 0;
   padding: 0;
@@ -8,15 +9,20 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000;
-  font-family: monospace;
-  color: white;
+  background: #121212;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #e0e0e0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Canvas fills full screen */
 canvas {
   display: block;
+  background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
 }
 
+/* Overlay containers */
 #startScreen,
 #gameOverScreen,
 #pauseScreen {
@@ -24,49 +30,123 @@ canvas {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  text-align: center;
-  color: white;
-  background: rgba(0, 0, 0, 0.85);
-  padding: 30px 40px;
-  border: 2px solid white;
-  border-radius: 10px;
-  z-index: 10;
+  width: 320px;
   max-width: 90vw;
-  box-shadow: 0 0 20px white;
+  background: linear-gradient(145deg, #222, #191919);
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+  padding: 40px 30px;
+  text-align: center;
+  color: #f0f0f0;
+  z-index: 100;
+  user-select: none;
 }
 
-#gameOverScreen {
-  display: none;
+/* Headings with subtle glow */
+#startScreen h1,
+#gameOverScreen h2,
+#pauseScreen h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #ffcc00;
+  text-shadow: 0 0 10px #ffcc00aa;
 }
 
-button {
-  margin-top: 15px;
-  padding: 10px 20px;
-  font-family: monospace;
+/* Paragraph text */
+#startScreen p,
+#gameOverScreen p,
+#pauseScreen p {
   font-size: 1rem;
-  cursor: pointer;
-  background: none;
-  border: 2px solid white;
-  border-radius: 6px;
-  color: white;
-  transition: background-color 0.3s, color 0.3s;
+  line-height: 1.5;
+  color: #bbb;
+  margin-bottom: 15px;
 }
 
-button:hover, button:focus {
-  background-color: white;
-  color: black;
+/* Score text on game over */
+#finalScore,
+#highScore {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #ffcc00;
+  margin-top: 10px;
+}
+
+/* Button styles */
+button {
+  cursor: pointer;
+  margin-top: 25px;
+  padding: 10px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+  background: #ffcc00;
+  border: none;
+  border-radius: 30px;
+  box-shadow:
+    0 4px 8px rgba(255, 204, 0, 0.6),
+    inset 0 -3px 6px rgba(255, 204, 0, 0.8);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+button:hover,
+button:focus {
+  background-color: #e6b800;
+  box-shadow:
+    0 6px 12px rgba(230, 184, 0, 0.9),
+    inset 0 -3px 6px rgba(230, 184, 0, 1);
   outline: none;
 }
 
-@media (max-width: 600px) {
+/* UI text display on top-left during gameplay */
+#hud {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #ffcc0066;
+  text-shadow: 0 0 6px #ffcc0088;
+  z-index: 50;
+  user-select: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  max-width: 90vw;
+}
+
+/* Individual HUD element styling */
+#hud div {
+  background: #222;
+  padding: 8px 15px;
+  border-radius: 20px;
+  box-shadow: 0 3px 8px #000c;
+}
+
+/* Special indicator colored text */
+#special-status {
+  color: #00d9ff;
+  font-weight: 700;
+  text-shadow: 0 0 8px #00d9ffcc;
+}
+
+/* Responsive UI adjustments */
+@media (max-width: 450px) {
   #startScreen,
   #gameOverScreen,
   #pauseScreen {
-    padding: 20px;
+    width: 280px;
+    padding: 35px 25px;
   }
 
   button {
+    padding: 8px 24px;
+    font-size: 1rem;
+  }
+
+  #hud {
     font-size: 0.9rem;
-    padding: 9px 18px;
+    gap: 15px;
   }
 }
