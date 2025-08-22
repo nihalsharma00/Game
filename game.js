@@ -43,7 +43,7 @@ const terrainSettings = {
     particleColor: "rgba(34,139,34,0.15)",
     particleCount: 70,
     particleType: "leaf",
-    image: "unnamed.png"
+    image: "https://raw.githubusercontent.com/nihalsharma00/Game/refs/heads/main/unnamed.png"
   },
   ice: {
     background: ["#a5d8ff", "#040d21"],
