@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>2D Shooter Game with Terrains</title>
+  <title>2D Shooter Game with Terrains and Tank Selection</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -21,6 +21,7 @@
     <div id="terrain-display">Terrain: None</div>
   </div>
 
+  <!-- Terrain Selection Screen -->
   <div id="terrainScreen">
     <h1>Select Your Terrain</h1>
     <div id="terrainOptions">
@@ -32,6 +33,19 @@
     </div>
   </div>
 
+  <!-- Tank Selection Screen -->
+  <div id="tankScreen" style="display:none;">
+    <h1>Select Your Tank</h1>
+    <div id="tankOptions">
+      <img src="tank1.png" alt="Tank 1" class="tank-btn" data-tank="tank1" />
+      <img src="tank2.png" alt="Tank 2" class="tank-btn" data-tank="tank2" />
+      <img src="tank3.png" alt="Tank 3" class="tank-btn" data-tank="tank3" />
+      <img src="tank4.png" alt="Tank 4" class="tank-btn" data-tank="tank4" />
+    </div>
+    <button id="tankChooseBtn" disabled>Choose Tank</button>
+  </div>
+
+  <!-- Start Screen -->
   <div id="startScreen" style="display:none;">
     <h1>2D Shooter Game</h1>
     <p>Use arrow keys or WASD to move</p>
@@ -40,6 +54,7 @@
     <p>Press Enter to start</p>
   </div>
 
+  <!-- Game Over Screen -->
   <div id="gameOverScreen" style="display:none;">
     <h2>Game Over</h2>
     <p id="finalScore">Score: 0</p>
@@ -48,6 +63,7 @@
     <button id="gameOverHomeBtn">Home</button>
   </div>
 
+  <!-- Pause Screen -->
   <div id="pauseScreen" style="display:none;">
     <h2>Paused</h2>
     <p>Press P to resume</p>
