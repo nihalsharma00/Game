@@ -79,7 +79,7 @@ const terrainSettings = {
     particleColor: "rgba(0, 255, 255, 0.2)",
     particleCount: 65,
     particleType: "rain",
-    image: "https://i.imgur.com/Hz1Ef7I.jpg"
+    image: "city.png"
   },
 };
 
