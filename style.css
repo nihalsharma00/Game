@@ -1,4 +1,3 @@
-/* Base Reset and Styling */
 * {
   margin: 0;
   padding: 0;
@@ -14,9 +13,33 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-canvas {
+
+#canvasWrapper {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#backgroundImage {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: 0;
+  transition: opacity 0.4s;
+}
+
+#gameCanvas {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
   display: block;
-  background: transparent; /* Background handled in JS for terrains */
+  background-color: transparent;
 }
 
 /* HUD */
@@ -29,7 +52,7 @@ canvas {
   font-size: 1rem;
   color: #ffcc0066;
   text-shadow: 0 0 6px #ffcc0088;
-  z-index: 50;
+  z-index: 99;
   user-select: none;
   display: flex;
   flex-wrap: wrap;
@@ -48,7 +71,7 @@ canvas {
   text-shadow: 0 0 8px #00d9ffcc;
 }
 
-/* Overlay Styling (Terrain Select, Start, Game Over, Pause) */
+/* Overlay Styling */
 #terrainScreen,
 #startScreen,
 #gameOverScreen,
