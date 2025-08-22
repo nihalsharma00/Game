@@ -7,8 +7,10 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <canvas id="gameCanvas"></canvas>
+  <div id="canvasWrapper">
+    <img id="backgroundImage" alt="Terrain Background" />
+    <canvas id="gameCanvas"></canvas>
+  </div>
 
   <div id="hud">
     <div id="score-display">Score: 0</div>
@@ -19,7 +21,6 @@
     <div id="terrain-display">Terrain: None</div>
   </div>
 
-  <!-- Terrain Selection Screen -->
   <div id="terrainScreen">
     <h1>Select Your Terrain</h1>
     <div id="terrainOptions">
@@ -44,11 +45,13 @@
     <p id="finalScore">Score: 0</p>
     <p id="highScore">High Score: 0</p>
     <button id="restartBtn">Restart</button>
+    <button id="gameOverHomeBtn">Home</button>
   </div>
 
   <div id="pauseScreen" style="display:none;">
     <h2>Paused</h2>
     <p>Press P to resume</p>
+    <button id="pauseHomeBtn">Home</button>
   </div>
 
   <script src="game.js"></script>
