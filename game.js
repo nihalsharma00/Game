@@ -43,7 +43,7 @@ const terrainSettings = {
     particleColor: "rgba(34,139,34,0.15)",
     particleCount: 70,
     particleType: "leaf",
-    image: "https://raw.githubusercontent.com/nihalsharma00/Game/refs/heads/main/unnamed.png"
+    image: "forest.png"
   },
   ice: {
     background: ["#a5d8ff", "#040d21"],
@@ -52,7 +52,7 @@ const terrainSettings = {
     particleColor: "rgba(250, 250, 255, 0.3)",
     particleCount: 80,
     particleType: "snow",
-    image: "https://i.imgur.com/xYf2uOu.jpg"
+    image: "snow.png"
   },
   sahara: {
     background: ["#f0d9a6", "#855e0f"],
@@ -61,7 +61,7 @@ const terrainSettings = {
     particleColor: "rgba(244, 196, 48, 0.25)",
     particleCount: 60,
     particleType: "dust",
-    image: "https://i.imgur.com/vp23U38.jpg"
+    image: "desert.jpg"
   },
   volcano: {
     background: ["#7b0f0f", "#220a0a"],
@@ -70,7 +70,7 @@ const terrainSettings = {
     particleColor: "rgba(255, 69, 0, 0.25)",
     particleCount: 75,
     particleType: "ember",
-    image: "https://i.imgur.com/DwBvZpf.jpg"
+    image: "unnamed.png"
   },
   city: {
     background: ["#1b1b1b", "#121212"],
