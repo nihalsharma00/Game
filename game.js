@@ -39,23 +39,75 @@ const specialCooldownDuration = 15000, powerUpDuration = 6000;
 let freezeTimer = 0, rapidFireTimer = 0, swiftShadowTimer = 0;
 const originalFireRate = fireRate, originalSpeed = player.speed;
 
-// --- Terrain Settings ---
 const terrainSettings = {
-  forest: { background: ["#1c3420", "#0d1a0d"], enemyColor: "lime", enemySpeedMultiplier: 1, particleColor: "rgba(34,139,34,0.15)", particleCount: 70, particleType: "leaf", image: "forest.png" },
-  ice: { background: ["#a5d8ff", "#040d21"], enemyColor: "#99ccff", enemySpeedMultiplier: 0.75, particleColor: "rgba(250, 250, 255, 0.3)", particleCount: 80, particleType: "snow", image: "snow.png" },
-  sahara: { background: ["#f0d9a6", "#855e0f"], enemyColor: "#d6a941", enemySpeedMultiplier: 1.3, particleColor: "rgba(244, 196, 48, 0.25)", particleCount: 60, particleType: "dust", image: "desert.jpg" },
-  volcano: { background: ["#7b0f0f", "#220a0a"], enemyColor: "#ff4500", enemySpeedMultiplier: 1.1, particleColor: "rgba(255, 69, 0, 0.25)", particleCount: 75, particleType: "ember", image: "unnamed.png" },
-  city: { background: ["#1b1b1b", "#121212"], enemyColor: "#00ffff", enemySpeedMultiplier: 1, particleColor: "rgba(0, 255, 255, 0.2)", particleCount: 65, particleType: "rain", image: "city.png" },
+  forest: {
+    background: ["#1c3420", "#0d1a0d"],
+    enemyColor: "lime",
+    enemySpeedMultiplier: 1,
+    particleColor: "rgba(34,139,34,0.15)",
+    particleCount: 70,
+    particleType: "leaf",
+    image: "forest.png"
+  },
+  ice: {
+    background: ["#a5d8ff", "#040d21"],
+    enemyColor: "#99ccff",
+    enemySpeedMultiplier: 0.75,
+    particleColor: "rgba(250, 250, 255, 0.3)",
+    particleCount: 80,
+    particleType: "snow",
+    image: "snow.png"
+  },
+  sahara: {
+    background: ["#f0d9a6", "#855e0f"],
+    enemyColor: "#d6a941",
+    enemySpeedMultiplier: 1.3,
+    particleColor: "rgba(244, 196, 48, 0.25)",
+    particleCount: 60,
+    particleType: "dust",
+    image: "desert.jpg"
+  },
+  volcano: {
+    background: ["#7b0f0f", "#220a0a"],
+    enemyColor: "#ff4500",
+    enemySpeedMultiplier: 1.1,
+    particleColor: "rgba(255, 69, 0, 0.25)",
+    particleCount: 75,
+    particleType: "ember",
+    image: "unnamed.png"
+  },
+  city: {
+    background: ["#1b1b1b", "#121212"],
+    enemyColor: "#00ffff",
+    enemySpeedMultiplier: 1,
+    particleColor: "rgba(0, 255, 255, 0.2)",
+    particleCount: 65,
+    particleType: "rain",
+    image: "city.png"
+  },
 };
 
-// --- PowerUps ---
 const powerUpTypes = [
-  { name: "Time Freeze", effect: () => { freezeTimer = 4000; }, dropRate: 0.05, color: "blue" },
-  { name: "Rapid Fire", effect: () => { rapidFireTimer = 6000; fireRate = originalFireRate / 2; }, dropRate: 0.08, color: "red" },
-  { name: "Swift Shadow", effect: () => { swiftShadowTimer = 6000; player.speed = originalSpeed * 1.5; }, dropRate: 0.07, color: "purple" }
+  {
+    name: "Time Freeze",
+    effect: () => { freezeTimer = 4000; },
+    dropRate: 0.05,
+    color: "blue"
+  },
+  {
+    name: "Rapid Fire",
+    effect: () => { rapidFireTimer = 6000; fireRate = originalFireRate / 2; },
+    dropRate: 0.08,
+    color: "red"
+  },
+  {
+    name: "Swift Shadow",
+    effect: () => { swiftShadowTimer = 6000; player.speed = originalSpeed * 1.5; },
+    dropRate: 0.07,
+    color: "purple"
+  }
 ];
 
-// --- Sounds ---
 const sounds = {
   shoot: new Audio("https://freesound.org/data/previews/320/320181_5260877-lq.mp3"),
   explosion: new Audio("https://freesound.org/data/previews/178/178186_2859974-lq.mp3"),
@@ -64,7 +116,7 @@ const sounds = {
   special: new Audio("https://freesound.org/data/previews/331/331912_3248244-lq.mp3"),
 };
 
-// --- Terrain Select (Mouse) ---
+// Terrain Select
 document.querySelectorAll(".terrain-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     terrain = btn.dataset.terrain;
@@ -75,7 +127,7 @@ document.querySelectorAll(".terrain-btn").forEach((btn) => {
   });
 });
 
-// --- Tank Select (Mouse) ---
+// Tank Select
 const tankButtons = document.querySelectorAll(".tank-btn");
 const tankChooseBtn = document.getElementById("tankChooseBtn");
 
@@ -99,7 +151,7 @@ function applyPlayerTank(tankName) {
   playerTankImage.src = tankName + ".png";
 }
 
-// --- Home Buttons ---
+// Home Buttons
 pauseHomeBtn.addEventListener("click", () => { resetToHome(); });
 gameOverHomeBtn.addEventListener("click", () => { resetToHome(); });
 
@@ -124,23 +176,28 @@ function resetToHome() {
   updateHUD();
 }
 
-// --- Restart Button ---
+// Start, Restart, Pause
 document.getElementById("restartBtn").addEventListener("click", restartGame);
 
-// --- General Input Events ---
 document.addEventListener("keydown", (e) => {
   keys[e.key] = true;
   if (!isGameStarted && e.key === "Enter") startGame();
   else if (isGameOver && e.key === "Enter") restartGame();
-  else if (e.key === "j" && specialAttackReady && !specialCooldown) triggerSpecial();
+  else if (e.key === "j" && specialAttackReady && !specialCooldown)
+    triggerSpecial();
   else if (e.key === "p" && isGameStarted && !isGameOver) togglePause();
 });
 document.addEventListener("keyup", (e) => { keys[e.key] = false; });
-canvas.addEventListener("mousedown", () => { if (!isPaused && isGameStarted && !isGameOver) shoot(); });
-document.addEventListener("touchstart", (e) => { if (!isPaused && isGameStarted && !isGameOver) shoot(); touchStart = e.touches[0]; });
+canvas.addEventListener("mousedown", () => {
+  if (!isPaused && isGameStarted && !isGameOver) shoot();
+});
+document.addEventListener("touchstart", (e) => {
+  if (!isPaused && isGameStarted && !isGameOver) shoot();
+  touchStart = e.touches[0];
+});
 document.addEventListener("touchmove", (e) => {
   if (!touchStart) return;
-  const touch = e.touches[0];
+  const touch = e.touches;
   const dx = touch.clientX - touchStart.clientX;
   const dy = touch.clientY - touchStart.clientY;
   player.x += dx * 0.15;
@@ -155,54 +212,7 @@ window.addEventListener("resize", () => {
   setTerrainBackgroundImage(terrain);
 });
 
-// ================================
-// 🔥 Keyboard Terrain Selection
-// ================================
-let terrainButtons = Array.from(document.querySelectorAll(".terrain-btn"));
-let currentTerrainIndex = 0;
-terrainButtons[currentTerrainIndex].classList.add("selected");
-
-document.addEventListener("keydown", (e) => {
-  if (terrainScreen.style.display !== "none") {
-    if (e.key === "ArrowRight") {
-      terrainButtons[currentTerrainIndex].classList.remove("selected");
-      currentTerrainIndex = (currentTerrainIndex + 1) % terrainButtons.length;
-      terrainButtons[currentTerrainIndex].classList.add("selected");
-    } else if (e.key === "ArrowLeft") {
-      terrainButtons[currentTerrainIndex].classList.remove("selected");
-      currentTerrainIndex = (currentTerrainIndex - 1 + terrainButtons.length) % terrainButtons.length;
-      terrainButtons[currentTerrainIndex].classList.add("selected");
-    } else if (e.key === "Enter") {
-      terrainButtons[currentTerrainIndex].click();
-    }
-  }
-});
-
-// ================================
-// 🔥 Keyboard Tank Selection
-// ================================
-let tankBtnArray = Array.from(tankButtons);
-let currentTankIndex = 0;
-
-document.addEventListener("keydown", (e) => {
-  if (tankScreen.style.display !== "none") {
-    if (e.key === "ArrowRight") {
-      tankBtnArray[currentTankIndex].classList.remove("selected");
-      currentTankIndex = (currentTankIndex + 1) % tankBtnArray.length;
-      tankBtnArray[currentTankIndex].classList.add("selected");
-      selectedTank = tankBtnArray[currentTankIndex].dataset.tank;
-      tankChooseBtn.disabled = false;
-    } else if (e.key === "ArrowLeft") {
-      tankBtnArray[currentTankIndex].classList.remove("selected");
-      currentTankIndex = (currentTankIndex - 1 + tankBtnArray.length) % tankBtnArray.length;
-      tankBtnArray[currentTankIndex].classList.add("selected");
-      selectedTank = tankBtnArray[currentTankIndex].dataset.tank;
-      tankChooseBtn.disabled = false;
-    } else if (e.key === "Enter") {
-      if (selectedTank) tankChooseBtn.click();
-    }
-  }
-});
+// ---- Game Logic ----
 
 function lerp(a, b, t) { return a + (b - a) * t; }
 
@@ -549,9 +559,3 @@ function setTerrainBackgroundImage(terrain) {
   backgroundImage.src = terrainSettings[terrain]?.image || "";
   backgroundImage.style.opacity = "1";
 }
-
-
-// ---------------------------------
-// Everything below remains unchanged
-// (enemies, bullets, collisions, HUD, update loop, etc.)
-// ---------------------------------
