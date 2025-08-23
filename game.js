@@ -24,9 +24,14 @@ let player = {
   speed: 5,
   color: "white",
   directionAngle: 0,
+  lastTrackX: null,
+  lastTrackY: null,
+  lastMoveAngle: 0,
 };
 
 let bullets = [], specialBullets = [], enemies = [], explosions = [], powerUps = [], particles = [];
+let tankTracks = []; // for tank marks
+let spitParticles = []; // for dirt bursts
 
 let score = 0, level = 1, lives = 3, kills = 0;
 let isGameOver = false, isGameStarted = false, isPaused = false;
@@ -168,7 +173,7 @@ function resetToHome() {
   terrainScreen.style.display = "block";
   backgroundImage.style.opacity = "1";
   bullets = []; specialBullets = []; enemies = []; explosions = [];
-  powerUps = []; particles = [];
+  powerUps = []; particles = []; tankTracks = []; spitParticles = [];
   score = 0; level = 1; lives = 3; kills = 0; fireRate = 0.3; enemySpeed = 1;
   selectedTank = null;
   tankButtons.forEach((b) => b.classList.remove("selected"));
@@ -202,6 +207,8 @@ document.addEventListener("touchmove", (e) => {
   const dy = touch.clientY - touchStart.clientY;
   player.x += dx * 0.15;
   player.y += dy * 0.15;
+  updateTankTracks();
+  emitSpitParticles(dx, dy);
   touchStart = touch;
 });
 window.addEventListener("resize", () => {
@@ -338,6 +345,121 @@ function updatePowerUps() {
 }
 function collectPowerUp(type){ playSound("special"); type.effect(); }
 
+function getTrackStyleForTerrain(terrain) {
+  switch (terrain) {
+    case "forest":   return { color: "rgba(70,50,20,0.6)", type: "mud",  spit: "rgba(90,65,32,0.4)" };
+    case "ice":      return { color: "rgba(190,220,255,0.7)", type: "compressed", spit: "rgba(190,220,255,0.5)" };
+    case "sahara":   return { color: "rgba(220,180,100,0.7)", type: "sand", spit: "rgba(240,200,90,0.5)" };
+    case "volcano":  return { color: "rgba(110,60,20,0.7)", type: "ash", spit: "rgba(120,80,60,0.5)" };
+    case "city":     return { color: "rgba(70,70,70,0.5)", type: "concrete", spit: "rgba(120,120,120,0.4)" };
+    default:         return { color: "rgba(80,80,80,0.5)", type: "default", spit: "rgba(100,100,100,0.4)" };
+  }
+}
+
+// Tank track drawing (auto fading, 0.5s lifetime, per terrain)
+function drawTankTracks() {
+  const now = Date.now();
+  ctx.save();
+  for (let i = 0; i < tankTracks.length; i++) {
+    const track = tankTracks[i];
+    const age = now - track.created;
+    if (age > 500) continue;
+
+    const { color, type } = getTrackStyleForTerrain(track.terrain);
+    ctx.globalAlpha = 1 - (age / 500); // fade out
+
+    ctx.translate(track.x, track.y);
+    ctx.rotate(track.angle * Math.PI / 180);
+
+    if (type === "mud" || type === "ash" || type === "concrete" || type === "default") {
+      ctx.fillStyle = color;
+      ctx.fillRect(-6, -2, 12, 4);
+    } else if (type === "sand") {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 9, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (type === "compressed") {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-7, 0);
+      ctx.lineTo(7, 0);
+      ctx.stroke();
+    }
+    ctx.rotate(-track.angle * Math.PI / 180);
+    ctx.translate(-track.x, -track.y);
+  }
+  ctx.restore();
+  // Remove marks older than 0.5s
+  tankTracks = tankTracks.filter(track => (now - track.created) <= 500);
+}
+
+// Spit/dirt burst on sharp turns or movement
+function emitSpitParticles(dx, dy) {
+  if (Math.abs(dx) + Math.abs(dy) < 8) return; // only big moves
+  const { spit } = getTrackStyleForTerrain(terrain);
+  for (let i = 0; i < 4; i++) {
+    const angle = player.directionAngle + (Math.random() - 0.5) * 90;
+    const rad = (angle * Math.PI) / 180;
+    const speed = 2 + Math.random()*2;
+    spitParticles.push({
+      x: player.x,
+      y: player.y,
+      dx: Math.cos(rad) * speed,
+      dy: Math.sin(rad) * speed,
+      size: 3 + Math.random()*2,
+      color: spit,
+      created: Date.now()
+    });
+  }
+}
+
+function updateSpitParticles() {
+  const now = Date.now();
+  for (let i = spitParticles.length - 1; i >= 0; i--) {
+    const p = spitParticles[i];
+    p.x += p.dx;
+    p.y += p.dy;
+    p.dy += 0.04; // gravity effect
+    if (now - p.created > 400) {
+      spitParticles.splice(i, 1);
+    }
+  }
+}
+
+function drawSpitParticles() {
+  const now = Date.now();
+  for (let i = 0; i < spitParticles.length; i++) {
+    const p = spitParticles[i];
+    const age = now - p.created;
+    ctx.save();
+    ctx.globalAlpha = 1 - (age / 400);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// Call this after updating player pos in movement handlers!
+function updateTankTracks() {
+  if (isGameStarted && !isPaused && !isGameOver &&
+    (player.lastTrackX !== player.x || player.lastTrackY !== player.y)) {
+    tankTracks.push({
+      x: player.x,
+      y: player.y,
+      angle: player.directionAngle,
+      created: Date.now(),
+      terrain: terrain
+    });
+    if (tankTracks.length > 160) tankTracks.shift();
+    player.lastTrackX = player.x;
+    player.lastTrackY = player.y;
+  }
+}
+
 function drawPlayer() {
   if (playerTankImage.complete && playerTankImage.naturalWidth !== 0) {
     ctx.save();
@@ -366,61 +488,7 @@ function drawPlayer() {
   }
 }
 
-function drawEnemies(){
-  enemies.forEach((e)=>{
-    ctx.fillStyle=terrainSettings[terrain]?.enemyColor||(e.isExplosive?"red":"lime");
-    ctx.beginPath(); ctx.arc(e.x,e.y,e.size,0,Math.PI*2); ctx.fill();
-  });
-}
-
-function drawBullets(){
-  ctx.fillStyle="yellow";
-  bullets.forEach((b)=>ctx.fillRect(b.x-b.size/2,b.y-b.size/2,b.size,b.size));
-  ctx.fillStyle="cyan";
-  specialBullets.forEach((b)=>ctx.fillRect(b.x-b.size/2,b.y-b.size/2,b.size,b.size));
-}
-function drawExplosions(){
-  explosions.forEach((ex)=>{ ctx.strokeStyle="orange";
-    ctx.beginPath(); ctx.arc(ex.x,ex.y,ex.radius,0,Math.PI*2); ctx.stroke();
-  });
-}
-
-function createParticles(){
-  if(!terrain) return;
-  const settings=terrainSettings[terrain];
-  while(particles.length<settings.particleCount){
-    particles.push({
-      x:Math.random()*canvas.width,
-      y:Math.random()*canvas.height,
-      size:Math.random()*3+1,
-      speedY:(settings.particleType==="snow"?0.5:
-        settings.particleType==="rain"?4:Math.random()*0.7+0.3),
-      speedX:(settings.particleType==="leaf"?(Math.random()-0.5)*0.2:0),
-      type:settings.particleType,
-      color:settings.particleColor
-    });
-  }
-}
-function updateParticles(){
-  particles.forEach((p)=>{
-    p.x+=p.speedX; p.y+=p.speedY;
-    if(p.y>canvas.height)p.y=-10;
-    if(p.x>canvas.width)p.x=0;
-    if(p.x<0)p.x=canvas.width;
-  });
-}
-function drawParticles(){
-  particles.forEach((p)=>{
-    ctx.fillStyle=p.color;
-    switch (p.type){
-      case "snow": ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); break;
-      case "rain": ctx.beginPath(); ctx.strokeStyle=p.color; ctx.lineWidth=1.5;
-                   ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-1,p.y+10); ctx.stroke(); break;
-      case "leaf": case "dust": case "ember":
-        ctx.beginPath(); ctx.ellipse(p.x,p.y,p.size*1.5,p.size,0,0,Math.PI*2); ctx.fill(); break;
-    }
-  });
-}
+// ...keep your drawEnemies, drawBullets, drawExplosions, createParticles, updateParticles, drawParticles, etc...
 
 function moveEnemies() {
   if(freezeTimer>0) return;
@@ -469,14 +537,19 @@ function loseLife(){
   lives--; playSound("hurt"); if(lives<=0) gameOver();
 }
 function handleInput(){
-  if(isPaused)return;
-  if(keys["ArrowLeft"]||keys["a"]) { player.x-=player.speed; player.directionAngle=180; }
-  if(keys["ArrowRight"]||keys["d"]) { player.x+=player.speed; player.directionAngle=0; }
-  if(keys["ArrowUp"]||keys["w"]) { player.y-=player.speed; player.directionAngle=270; }
-  if(keys["ArrowDown"]||keys["s"]) { player.y+=player.speed; player.directionAngle=90; }
+  if(isPaused || isGameOver)return;
+  let moved = false, dx = 0, dy = 0;
+  if(keys["ArrowLeft"]||keys["a"]) { player.x-=player.speed; player.directionAngle=180; dx -= player.speed; moved = true;}
+  if(keys["ArrowRight"]||keys["d"]) { player.x+=player.speed; player.directionAngle=0; dx += player.speed; moved = true;}
+  if(keys["ArrowUp"]||keys["w"]) { player.y-=player.speed; player.directionAngle=270; dy -= player.speed; moved = true;}
+  if(keys["ArrowDown"]||keys["s"]) { player.y+=player.speed; player.directionAngle=90; dy += player.speed; moved = true;}
   if(keys["n"]) shoot();
   player.x=Math.max(player.size,Math.min(canvas.width-player.size,player.x));
   player.y=Math.max(player.size,Math.min(canvas.height-player.size,player.y));
+  if(moved) {
+    updateTankTracks();
+    emitSpitParticles(dx, dy);
+  }
 }
 function updateHUD(){
   document.getElementById("score-display").textContent=`Score: ${score}`;
@@ -492,6 +565,9 @@ function updateGame() {
   drawBackground();
   updateParticles();
   createParticles();
+  updateSpitParticles();
+  drawTankTracks(); // draw before player!
+  drawSpitParticles();
   handleInput();
   moveEnemies(); moveBullets(); checkCollisions();
   updatePowerUps();
@@ -516,6 +592,7 @@ function updateGame() {
   updateHUD();
   requestAnimationFrame(updateGame);
 }
+let enemySpawnInterval;
 function startGame() {
   if(!terrain) { alert("Please select a terrain first!"); return; }
   if(!selectedTank) { alert("Please select a tank first!"); return; }
@@ -524,7 +601,12 @@ function startGame() {
   gameOverScreen.style.display="none"; terrainScreen.style.display="none";
   pauseScreen.style.display="none"; tankScreen.style.display="none";
   setTerrainBackgroundImage(terrain);
-  setInterval(()=>{ if(!isPaused&&!isGameOver&&isGameStarted) createEnemy(); },1000);
+
+  clearInterval(enemySpawnInterval);
+  enemySpawnInterval = setInterval(()=>{ if(!isPaused&&!isGameOver&&isGameStarted) createEnemy(); },1000);
+
+  player.lastTrackX = player.x;
+  player.lastTrackY = player.y;
   updateGame();
 }
 function gameOver(){
@@ -533,15 +615,18 @@ function gameOver(){
   document.getElementById("finalScore").textContent=`Score: ${score}`;
   document.getElementById("highScore").textContent=`High Score: ${highScore}`;
   gameOverScreen.style.display="block";
+  clearInterval(enemySpawnInterval);
 }
 function restartGame(){
-  player={x:canvas.width/2,y:canvas.height-60,size:20,speed:5,color:"white",directionAngle:0};
-  bullets=[];specialBullets=[];enemies=[];explosions=[];powerUps=[];particles=[];
+  player={x:canvas.width/2,y:canvas.height-60,size:20,speed:5,color:"white",directionAngle:0, lastTrackX:null, lastTrackY:null, lastMoveAngle:0};
+  bullets=[];specialBullets=[];enemies=[];explosions=[];powerUps=[];particles=[];tankTracks=[];spitParticles=[];
   score=0;level=1;lives=3;kills=0;enemySpeed=1;fireRate=0.3;specialAttackReady=false;
   specialCooldown=false;isGameOver=false;isGameStarted=true;isPaused=false;
   gameOverScreen.style.display="none"; pauseScreen.style.display="none";
   setTerrainBackgroundImage(terrain);
   applyPlayerTank(selectedTank);
+  player.lastTrackX = player.x;
+  player.lastTrackY = player.y;
   updateHUD(); updateGame();
 }
 function togglePause(){
@@ -554,7 +639,6 @@ function playSound(name){
   sounds[name].pause(); sounds[name].currentTime=0;
   sounds[name].play().catch(()=>{});
 }
-
 function setTerrainBackgroundImage(terrain) {
   backgroundImage.src = terrainSettings[terrain]?.image || "";
   backgroundImage.style.opacity = "1";
