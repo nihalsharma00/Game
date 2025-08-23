@@ -42,6 +42,11 @@ body, html {
   z-index: 0;
 }
 
+#selected {
+  outline: 3px solid #00ffff;
+  box-shadow: 0 0 8px #00ffff, inset 0 0 10px #00ffffcc;
+}
+
 #gameCanvas {
   position: relative;
   z-index: 1;
