@@ -435,7 +435,7 @@ function checkPlayerCollisionWithEnemy() {
   }
 }
 
-// Move enemies logic (unchanged)
+// Move enemies logic
 function moveEnemies() {
   if (freezeTimer > 0) return;
   enemies.forEach((e) => {
@@ -448,7 +448,7 @@ function moveEnemies() {
   });
 }
 
-// Move bullets logic (unchanged)
+// Move bullets logic
 function moveBullets() {
   bullets.forEach((b) => {
     b.x += b.dx;
@@ -460,7 +460,7 @@ function moveBullets() {
   });
 }
 
-// Collision checks (update player collision to rectangular), bullets and enemies collision remain circular with enemy size
+// Collision checks (player collision updated to rectangles)
 function checkCollisions() {
   enemies.forEach((e, ei) => {
     if (e.isExplosive && !e.exploded && Date.now() - e.createdAt >= 5000) {
@@ -486,185 +486,6 @@ function checkCollisions() {
   // Check player collision separately as rectangle-rectangle
   checkPlayerCollisionWithEnemy();
 }
-
-// Draw player power-ups, particles, explosions (unchanged)
-
-// Update game loop with drawPlayer included
-function updateGame() {
-  drawBackground();
-  drawParticles();
-  drawPowerUps();
-  drawEnemies();
-  drawBullets();
-  drawExplosions();
-  drawPlayer(); // Draw player as rectangle with rotation/image
-
-  moveEnemies();
-  moveBullets();
-
-  updatePowerUps();
-
-  checkCollisions();
-
-  // Timer updates for freeze, rapid fire, swift shadow
-  if (freezeTimer > 0) freezeTimer -= 16;
-  if (rapidFireTimer > 0) rapidFireTimer -= 16;
-  else fireRate = originalFireRate;
-  if (swiftShadowTimer > 0) swiftShadowTimer -= 16;
-  else player.speed = originalSpeed;
-
-  // Level up based on score
-  if (score >= level * 1000) {
-    level++;
-    enemySpeed = 1 + level * 0.3;
-    fireRate = Math.max(0.2, fireRate * 0.9);
-    playSound("levelUp");
-  }
-
-  updateHUD();
-
-  if (!isPaused && !isGameOver && isGameStarted) requestAnimationFrame(updateGame);
-}
-
-// Restart game updates player size info and resets
-function restartGame() {
-  player = {
-    x: canvas.width / 2,
-    y: canvas.height - 60,
-    width: 30,
-    height: 20,
-    speed: 5,
-    color: "white",
-    directionAngle: 0,
-  };
-
-  bullets = [];
-  specialBullets = [];
-  enemies = [];
-  explosions = [];
-  powerUps = [];
-  particles = [];
-
-  score = 0;
-  level = 1;
-  lives = 3;
-  kills = 0;
-  enemySpeed = 1;
-  fireRate = 0.3;
-  specialAttackReady = false;
-  specialCooldown = false;
-  isGameOver = false;
-  isGameStarted = true;
-  isPaused = false;
-
-  gameOverScreen.style.display = "none";
-  pauseScreen.style.display = "none";
-  setTerrainBackgroundImage(terrain);
-  applyPlayerTank(selectedTank);
-  updateHUD();
-  updateGame();
-}
-
-// Other helper functions unchanged: shoot, triggerSpecial, dropPowerUp, updatePowerUps, drawPowerUps, drawExplosions, createParticles, drawParticles, playSound, setTerrainBackgroundImage
-
-// Start game logic
-
-function startGame() {
-  if (!terrain) {
-    alert("Please select a terrain first!");
-    return;
-  }
-  if (!selectedTank) {
-    alert("Please select a tank first!");
-    return;
-  }
-
-  isGameStarted = true;
-  isGameOver = false;
-  isPaused = false;
-
-  startScreen.style.display = "none";
-  gameOverScreen.style.display = "none";
-  terrainScreen.style.display = "none";
-  pauseScreen.style.display = "none";
-  tankScreen.style.display = "none";
-
-  setTerrainBackgroundImage(terrain);
-
-  setInterval(() => {
-    if (!isPaused && !isGameOver && isGameStarted) createEnemy();
-  }, 1000);
-
-  updateGame();
-}
-
-// Pause toggle
-
-function togglePause() {
-  isPaused = !isPaused;
-  pauseScreen.style.display = isPaused ? "block" : "none";
-  if (!isPaused) updateGame();
-}
-
-// Play audio helper
-
-function playSound(name) {
-  if (!sounds[name]) return;
-  sounds[name].pause();
-  sounds[name].currentTime = 0;
-  sounds[name].play().catch(() => {});
-}
-
-// ---- Power-up related functions ----
-
-function dropPowerUp(powerUp) {
-  powerUps.push({
-    id: crypto.randomUUID(),
-    x: player.x,
-    y: player.y - player.height, // updated to use height instead of size
-    size: 15,
-    type: powerUp,
-    createdAt: Date.now(),
-  });
-}
-
-function drawPowerUps() {
-  powerUps.forEach((pu) => {
-    ctx.fillStyle = pu.type.color;
-    ctx.beginPath();
-    ctx.arc(pu.x, pu.y, pu.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "white";
-    ctx.font = "12px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(pu.type.name, pu.x, pu.y - pu.size - 5);
-  });
-}
-
-function updatePowerUps() {
-  const now = Date.now();
-  for (let i = powerUps.length - 1; i >= 0; i--) {
-    const pu = powerUps[i];
-    if (now - pu.createdAt > powerUpDuration) {
-      powerUps.splice(i, 1);
-      continue;
-    }
-    // Pickup check (simple circle to rectangle approx)
-    const playerBox = getPlayerBox();
-    if (
-      pu.x > playerBox.x &&
-      pu.x < playerBox.x + playerBox.width &&
-      pu.y > playerBox.y &&
-      pu.y < playerBox.y + playerBox.height
-    ) {
-      pu.type.effect();
-      powerUps.splice(i, 1);
-      playSound("levelUp");
-    }
-  }
-}
-
-// ---- Particle and explosion functions ----
 
 function drawExplosions() {
   explosions.forEach((ex, i) => {
@@ -723,7 +544,52 @@ function drawParticles() {
   });
 }
 
-// ---- HUD update function ----
+function dropPowerUp(powerUp) {
+  powerUps.push({
+    id: crypto.randomUUID(),
+    x: player.x,
+    y: player.y - player.height,
+    size: 15,
+    type: powerUp,
+    createdAt: Date.now(),
+  });
+}
+
+function drawPowerUps() {
+  powerUps.forEach((pu) => {
+    ctx.fillStyle = pu.type.color;
+    ctx.beginPath();
+    ctx.arc(pu.x, pu.y, pu.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "white";
+    ctx.font = "12px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(pu.type.name, pu.x, pu.y - pu.size - 5);
+  });
+}
+
+function updatePowerUps() {
+  const now = Date.now();
+  for (let i = powerUps.length - 1; i >= 0; i--) {
+    const pu = powerUps[i];
+    if (now - pu.createdAt > powerUpDuration) {
+      powerUps.splice(i, 1);
+      continue;
+    }
+    // Pickup check (simple circle to rectangle approx)
+    const playerBox = getPlayerBox();
+    if (
+      pu.x > playerBox.x &&
+      pu.x < playerBox.x + playerBox.width &&
+      pu.y > playerBox.y &&
+      pu.y < playerBox.y + playerBox.height
+    ) {
+      pu.type.effect();
+      powerUps.splice(i, 1);
+      playSound("levelUp");
+    }
+  }
+}
 
 function updateHUD() {
   document.getElementById("scoreDisplay").textContent = `Score: ${score}`;
@@ -734,8 +600,6 @@ function updateHUD() {
     ? "Special Ready (Press J)"
     : "Special Not Ready";
 }
-
-// ---- Shooting and special attack ----
 
 function shoot() {
   const now = Date.now();
@@ -784,6 +648,124 @@ function triggerSpecial() {
   }, specialCooldownDuration);
 }
 
-// ---- Other required utility functions like startGame(), gameOver(), togglePause(), playSound(), setTerrainBackgroundImage() ----
-// Add these unchanged from your original code.
+function updateGame() {
+  drawBackground();
+  drawParticles();
+  drawPowerUps();
+  drawEnemies();
+  drawBullets();
+  drawExplosions();
+  drawPlayer();
+
+  moveEnemies();
+  moveBullets();
+
+  updatePowerUps();
+
+  checkCollisions();
+
+  if (freezeTimer > 0) freezeTimer -= 16;
+  if (rapidFireTimer > 0) rapidFireTimer -= 16;
+  else fireRate = originalFireRate;
+  if (swiftShadowTimer > 0) swiftShadowTimer -= 16;
+  else player.speed = originalSpeed;
+
+  if (score >= level * 1000) {
+    level++;
+    enemySpeed = 1 + level * 0.3;
+    fireRate = Math.max(0.2, fireRate * 0.9);
+    playSound("levelUp");
+  }
+
+  updateHUD();
+
+  if (!isPaused && !isGameOver && isGameStarted) requestAnimationFrame(updateGame);
+}
+
+function restartGame() {
+  player = {
+    x: canvas.width / 2,
+    y: canvas.height - 60,
+    width: 30,
+    height: 20,
+    speed: 5,
+    color: "white",
+    directionAngle: 0,
+  };
+
+  bullets = [];
+  specialBullets = [];
+  enemies = [];
+  explosions = [];
+  powerUps = [];
+  particles = [];
+
+  score = 0;
+  level = 1;
+  lives = 3;
+  kills = 0;
+  enemySpeed = 1;
+  fireRate = 0.3;
+  specialAttackReady = false;
+  specialCooldown = false;
+  isGameOver = false;
+  isGameStarted = true;
+  isPaused = false;
+
+  gameOverScreen.style.display = "none";
+  pauseScreen.style.display = "none";
+  setTerrainBackgroundImage(terrain);
+  applyPlayerTank(selectedTank);
+  updateHUD();
+  updateGame();
+}
+
+function startGame() {
+  if (!terrain) {
+    alert("Please select a terrain first!");
+    return;
+  }
+  if (!selectedTank) {
+    alert("Please select a tank first!");
+    return;
+  }
+
+  isGameStarted = true;
+  isGameOver = false;
+  isPaused = false;
+
+  startScreen.style.display = "none";
+  gameOverScreen.style.display = "none";
+  terrainScreen.style.display = "none";
+  pauseScreen.style.display = "none";
+  tankScreen.style.display = "none";
+
+  setTerrainBackgroundImage(terrain);
+
+  setInterval(() => {
+    if (!isPaused && !isGameOver && isGameStarted) createEnemy();
+  }, 1000);
+
+  updateGame();
+}
+
+function togglePause() {
+  isPaused = !isPaused;
+  pauseScreen.style.display = isPaused ? "block" : "none";
+  if (!isPaused) updateGame();
+}
+
+function playSound(name) {
+  if (!sounds[name]) return;
+  sounds[name].pause();
+  sounds[name].currentTime = 0;
+  sounds[name].play().catch(() => {});
+}
+
+function setTerrainBackgroundImage(terrain) {
+  backgroundImage.src = terrainSettings[terrain]?.image || "";
+  backgroundImage.style.opacity = "1";
+}
+
+// Additional required functions such as increaseScore(), handlePlayerHit() etc. should also be included here as from your original code to ensure full game functionality.
 
