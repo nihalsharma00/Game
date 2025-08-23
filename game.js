@@ -179,11 +179,13 @@ function setupArrowKeyNavigation(buttons, onSelect) {
 
   document.addEventListener("keydown", (e) => {
     if (!buttons.length) return;
+
+    // Only react if the focus is within these buttons
     if (
       document.activeElement !== buttons[selectedIndex] &&
       !buttons.includes(document.activeElement)
     )
-      return; // only respond if focus in this set
+      return;
 
     if (["ArrowRight", "ArrowDown"].includes(e.key)) {
       e.preventDefault();
@@ -231,6 +233,11 @@ setupArrowKeyNavigation(tankButtonsArr, (idx) => {
   tankButtonsArr[idx].classList.add("selected");
   selectedTank = tankButtonsArr[idx].dataset.tank;
   tankChooseBtn.disabled = false;
+
+  // IMPORTANT FIX:
+  // When user presses Enter on a tank button, also trigger the tankChooseBtn click
+  // to proceed to start screen and apply player tank.
+  tankChooseBtn.click();
 });
 
 // Tank buttons click handler (already present)
@@ -336,8 +343,7 @@ function showGameOverScreen() {
   updateGameOverSelection();
 }
 
-// Make sure to replace all gameOverScreen.style.display = "block" calls with showGameOverScreen() in your game logic:
-
+// Replace earlier gameOver screen show calls with this function
 function gameOver() {
   isGameOver = true;
   highScore = Math.max(score, highScore);
@@ -348,19 +354,29 @@ function gameOver() {
   showGameOverScreen();
 }
 
-// Rest of your existing code (listeners, game logic) remains unchanged...
-
-// Example additions to existing event listeners to integrate your game controls:
-document.getElementById("restartBtn").addEventListener("click", restartGame);
+// Global keydown for game start and other controls
 document.addEventListener("keydown", (e) => {
   keys[e.key] = true;
-  if (!isGameStarted && e.key === "Enter") startGame();
-  else if (isGameOver && e.key === "Enter") restartGame();
-  else if (e.key === "j" && specialAttackReady && !specialCooldown)
-    triggerSpecial();
-  else if (e.key === "p" && isGameStarted && !isGameOver) togglePause();
-});
 
+  // Start the game when Enter is pressed on the Start screen
+  if (!isGameStarted && e.key === "Enter") {
+    if (!terrain) {
+      alert("Please select a terrain first!");
+      return;
+    }
+    if (!selectedTank) {
+      alert("Please select a tank first!");
+      return;
+    }
+    startGame();
+  } else if (isGameOver && e.key === "Enter") {
+    restartGame();
+  } else if (e.key === "j" && specialAttackReady && !specialCooldown) {
+    triggerSpecial();
+  } else if (e.key === "p" && isGameStarted && !isGameOver) {
+    togglePause();
+  }
+});
 document.addEventListener("keyup", (e) => {
   keys[e.key] = false;
 });
@@ -392,7 +408,7 @@ window.addEventListener("resize", () => {
   setTerrainBackgroundImage(terrain);
 });
 
-// Your remaining game logic continues from here...
+// Rest of your existing game logic continues here...
 
 function setTerrainBackgroundImage(terrain) {
   backgroundImage.src = terrainSettings[terrain]?.image || "";
@@ -403,4 +419,4 @@ function updateHUD() {
   // Update your HUD elements with current score, level, lives, etc.
 }
 
-// ... (Rest of game functions like createEnemy, shoot, triggerSpecial, moveEnemies, checkCollisions, etc. remain as before)
+// ... Other game functions remain unchanged ...
