@@ -2,74 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>2D Shooter Game with Terrains and Tank Selection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2D Tank Shooter</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="canvasWrapper">
-    <img id="backgroundImage" alt="Terrain Background" />
-    <canvas id="gameCanvas"></canvas>
-  </div>
 
-  <div id="hud">
-    <div id="score-display">Score: 0</div>
-    <div id="level-display">Level: 1</div>
-    <div id="lives-display">Lives: 3</div>
-    <div id="kills-display">Kills: 0</div>
-    <div id="special-status">Special: LOCKED</div>
-    <div id="terrain-display">Terrain: None</div>
-  </div>
+<div id="canvasWrapper">
+  <img id="backgroundImage" />
+  <canvas id="gameCanvas"></canvas>
+</div>
 
-  <!-- Terrain Selection Screen -->
-  <div id="terrainScreen">
-    <h1>Select Your Terrain</h1>
-    <div id="terrainOptions">
-      <button class="terrain-btn" data-terrain="forest">Forest</button>
-      <button class="terrain-btn" data-terrain="ice">Ice</button>
-      <button class="terrain-btn" data-terrain="sahara">Sahara</button>
-      <button class="terrain-btn" data-terrain="volcano">Volcano</button>
-      <button class="terrain-btn" data-terrain="city">City</button>
-    </div>
-  </div>
+<div id="hud">
+  <div id="score-display">Score: 0</div>
+  <div id="level-display">Level: 1</div>
+  <div id="lives-display">Lives: 3</div>
+  <div id="special-status">Special: LOCKED</div>
+</div>
 
-  <!-- Tank Selection Screen -->
-  <div id="tankScreen" style="display:none;">
-    <h1>Select Your Tank</h1>
-    <div id="tankOptions">
-      <img src="tank1.png" alt="Tank 1" class="tank-btn" data-tank="tank1" />
-      <img src="tank2.png" alt="Tank 2" class="tank-btn" data-tank="tank2" />
-      <img src="tank3.png" alt="Tank 3" class="tank-btn" data-tank="tank3" />
-      <img src="tank4.png" alt="Tank 4" class="tank-btn" data-tank="tank4" />
-    </div>
-    <button id="tankChooseBtn" disabled>Choose Tank</button>
-  </div>
+<div id="terrainScreen">
+  <h1>Select Terrain</h1>
+  <button class="terrain-btn" data-terrain="forest">Forest</button>
+  <button class="terrain-btn" data-terrain="ice">Ice</button>
+  <button class="terrain-btn" data-terrain="sahara">Sahara</button>
+  <button class="terrain-btn" data-terrain="volcano">Volcano</button>
+  <button class="terrain-btn" data-terrain="city">City</button>
+</div>
 
-  <!-- Start Screen -->
-  <div id="startScreen" style="display:none;">
-    <h1>2D Shooter Game</h1>
-    <p>Use arrow keys or WASD to move</p>
-    <p>Press N or click/touch to shoot</p>
-    <p>Press J for special attack when ready</p>
-    <p>Press Enter to start</p>
-  </div>
+<div id="tankScreen" style="display:none;">
+  <h1>Select Tank</h1>
+  <img src="tank1.png" class="tank-btn" data-tank="tank1">
+  <img src="tank2.png" class="tank-btn" data-tank="tank2">
+  <button id="tankChooseBtn" disabled>Choose</button>
+</div>
 
-  <!-- Game Over Screen -->
-  <div id="gameOverScreen" style="display:none;">
-    <h2>Game Over</h2>
-    <p id="finalScore">Score: 0</p>
-    <p id="highScore">High Score: 0</p>
-    <button id="restartBtn">Restart</button>
-    <button id="gameOverHomeBtn">Home</button>
-  </div>
+<div id="startScreen" style="display:none;">
+  <h1>Press ENTER to Start</h1>
+</div>
 
-  <!-- Pause Screen -->
-  <div id="pauseScreen" style="display:none;">
-    <h2>Paused</h2>
-    <p>Press P to resume</p>
-    <button id="pauseHomeBtn">Home</button>
-  </div>
+<div id="gameOverScreen" style="display:none;">
+  <h1>Game Over</h1>
+  <button onclick="location.reload()">Restart</button>
+</div>
 
-  <script src="game.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
