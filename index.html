@@ -16,33 +16,54 @@
 <div id="hud">
   <div id="score-display">Score: 0</div>
   <div id="level-display">Level: 1</div>
-  <div id="lives-display">Lives: 3</div>
-  <div id="special-status">Special: LOCKED</div>
+  <div id="lives-display">Lives: ❤️❤️❤️</div>
+  <div id="special-status">Special: 0/20</div>
 </div>
 
+<!-- TERRAIN SELECT -->
 <div id="terrainScreen">
-  <h1>Select Terrain</h1>
-  <button class="terrain-btn" data-terrain="forest">Forest</button>
-  <button class="terrain-btn" data-terrain="ice">Ice</button>
-  <button class="terrain-btn" data-terrain="sahara">Sahara</button>
-  <button class="terrain-btn" data-terrain="volcano">Volcano</button>
-  <button class="terrain-btn" data-terrain="city">City</button>
+  <h1>🎮 Tank Shooter</h1>
+  <p>Choose your battlefield</p>
+  <div class="btn-grid">
+    <button class="terrain-btn" data-terrain="forest">🌲 Forest</button>
+    <button class="terrain-btn" data-terrain="ice">❄️ Ice</button>
+    <button class="terrain-btn" data-terrain="sahara">🏜️ Sahara</button>
+    <button class="terrain-btn" data-terrain="volcano">🌋 Volcano</button>
+    <button class="terrain-btn" data-terrain="city">🏙️ City</button>
+  </div>
 </div>
 
+<!-- TANK SELECT (all 4 tanks) -->
 <div id="tankScreen" style="display:none;">
-  <h1>Select Tank</h1>
-  <img src="tank1.png" class="tank-btn" data-tank="tank1">
-  <img src="tank2.png" class="tank-btn" data-tank="tank2">
-  <button id="tankChooseBtn" disabled>Choose</button>
+  <h1>Choose Your Tank</h1>
+  <p>Click a tank to select it</p>
+  <div class="tank-grid">
+    <img src="tank1.png" class="tank-btn" data-tank="tank1" title="Tank 1">
+    <img src="tank2.png" class="tank-btn" data-tank="tank2" title="Tank 2">
+    <img src="tank3.png" class="tank-btn" data-tank="tank3" title="Tank 3">
+    <img src="tank4.png" class="tank-btn" data-tank="tank4" title="Tank 4">
+  </div>
+  <button id="tankChooseBtn" disabled>Into Battle →</button>
 </div>
 
+<!-- START SCREEN -->
 <div id="startScreen" style="display:none;">
-  <h1>Press ENTER to Start</h1>
+  <h1>Ready!</h1>
+  <div class="controls-list">
+    <div><kbd>WASD</kbd> Move</div>
+    <div><kbd>Mouse</kbd> Aim</div>
+    <div><kbd>Click</kbd> Shoot</div>
+    <div><kbd>Space / F</kbd> Special</div>
+  </div>
+  <p class="hint">Special: kill 20 enemies to charge it.<br>Destroys all enemies + gives invincibility!</p>
+  <button onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))">▶ Start Game</button>
 </div>
 
+<!-- GAME OVER -->
 <div id="gameOverScreen" style="display:none;">
-  <h1>Game Over</h1>
-  <button onclick="location.reload()">Restart</button>
+  <h1>💥 Game Over</h1>
+  <p>Final Score: <span id="final-score">0</span></p>
+  <button onclick="location.reload()">Play Again</button>
 </div>
 
 <script src="game.js"></script>
