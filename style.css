@@ -1,8 +1,10 @@
+*, *::before, *::after { box-sizing: border-box; }
+
 body, html {
-  margin: 0;
-  background: black;
+  margin: 0; padding: 0;
+  background: #0a0a0f;
   overflow: hidden;
-  font-family: monospace;
+  font-family: 'Courier New', monospace;
 }
 
 #canvasWrapper {
@@ -13,10 +15,9 @@ body, html {
 
 #backgroundImage {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   object-fit: cover;
-  filter: brightness(0.4);
+  filter: brightness(0.35) saturate(0.8);
 }
 
 #gameCanvas {
@@ -24,30 +25,170 @@ body, html {
   inset: 0;
 }
 
+/* ─── HUD ─── */
 #hud {
   position: fixed;
-  top: 10px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 20px;
-  background: rgba(0,0,0,0.7);
-  padding: 10px;
-  border: 2px solid cyan;
-  color: cyan;
+  gap: 24px;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 8px 20px;
+  border: 1px solid #00f5ff44;
+  border-radius: 4px;
+  color: #00f5ff;
+  font-size: 14px;
+  letter-spacing: 1px;
+  z-index: 10;
+  backdrop-filter: blur(4px);
 }
 
+/* ─── OVERLAY PANELS ─── */
 #terrainScreen,
 #tankScreen,
 #startScreen,
 #gameOverScreen {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.9);
-  padding: 20px;
-  border: 2px solid cyan;
-  color: cyan;
+  background: rgba(6, 10, 20, 0.95);
+  padding: 36px 44px;
+  border: 1px solid #00f5ff55;
+  border-radius: 8px;
+  color: #e0f7ff;
   text-align: center;
+  z-index: 100;
+  min-width: 340px;
+  box-shadow: 0 0 40px #00f5ff22;
+}
+
+#terrainScreen h1, #tankScreen h1,
+#startScreen h1, #gameOverScreen h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  color: #00f5ff;
+  letter-spacing: 2px;
+}
+
+#terrainScreen p, #tankScreen p, #startScreen p {
+  margin: 0 0 20px;
+  color: #7ab8cc;
+  font-size: 13px;
+}
+
+/* ─── TERRAIN BUTTONS ─── */
+.btn-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.terrain-btn {
+  background: rgba(0, 245, 255, 0.08);
+  border: 1px solid #00f5ff44;
+  color: #c0eeff;
+  padding: 12px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.terrain-btn:hover {
+  background: rgba(0, 245, 255, 0.18);
+  border-color: #00f5ff99;
+  transform: scale(1.04);
+}
+
+/* ─── TANK GRID ─── */
+.tank-grid {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin: 10px 0 20px;
+}
+
+.tank-btn {
+  width: 72px; height: 72px;
+  object-fit: contain;
+  cursor: pointer;
+  border: 2px solid #00f5ff33;
+  border-radius: 6px;
+  padding: 6px;
+  background: rgba(0,245,255,0.05);
+  transition: border-color 0.15s, transform 0.1s, background 0.15s;
+  filter: drop-shadow(0 0 4px #0006);
+}
+.tank-btn:hover {
+  border-color: #00f5ff88;
+  transform: scale(1.08);
+  background: rgba(0,245,255,0.12);
+}
+.tank-btn.selected {
+  border-color: #00f5ff;
+  background: rgba(0,245,255,0.2);
+  box-shadow: 0 0 12px #00f5ff55;
+}
+
+/* ─── BUTTONS ─── */
+button, #tankChooseBtn {
+  background: transparent;
+  border: 1px solid #00f5ff;
+  color: #00f5ff;
+  padding: 10px 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 1px;
+  transition: background 0.15s, color 0.15s;
+  margin-top: 8px;
+}
+button:hover:not(:disabled) {
+  background: #00f5ff;
+  color: #000;
+}
+button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ─── CONTROLS LIST ─── */
+.controls-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 20px;
+  margin: 16px 0;
+  text-align: left;
+  font-size: 13px;
+  color: #9dd;
+}
+kbd {
+  background: rgba(0,245,255,0.15);
+  border: 1px solid #00f5ff55;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-family: inherit;
+  color: #00f5ff;
+  font-size: 12px;
+}
+.hint {
+  font-size: 12px;
+  color: #7ab8cc;
+  margin: 4px 0 16px;
+  line-height: 1.6;
+}
+
+/* ─── GAME OVER ─── */
+#gameOverScreen p {
+  font-size: 18px;
+  color: #9dd;
+  margin: 12px 0 20px;
+}
+#final-score {
+  color: #00f5ff;
+  font-size: 22px;
+  font-weight: bold;
 }
