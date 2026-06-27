@@ -1,194 +1,456 @@
-*, *::before, *::after { box-sizing: border-box; }
-
-body, html {
-  margin: 0; padding: 0;
-  background: #0a0a0f;
-  overflow: hidden;
-  font-family: 'Courier New', monospace;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-#canvasWrapper {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
+html,
+body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;
+    background:#050b14;
+    color:white;
 }
 
-#backgroundImage {
-  position: absolute;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  filter: brightness(0.35) saturate(0.8);
+body{
+    background:
+        radial-gradient(circle at 20% 20%,#113055 0%,transparent 30%),
+        radial-gradient(circle at 80% 20%,#0d4f6f 0%,transparent 30%),
+        radial-gradient(circle at 50% 80%,#1b2744 0%,transparent 35%),
+        linear-gradient(135deg,#050b14,#091423,#0f1f35);
 }
 
-#gameCanvas {
-  position: absolute;
-  inset: 0;
+#gameContainer{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    overflow:hidden;
 }
 
-/* ─── HUD ─── */
-#hud {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 24px;
-  background: rgba(0, 0, 0, 0.75);
-  padding: 8px 20px;
-  border: 1px solid #00f5ff44;
-  border-radius: 4px;
-  color: #00f5ff;
-  font-size: 14px;
-  letter-spacing: 1px;
-  z-index: 10;
-  backdrop-filter: blur(4px);
+#backgroundImage{
+    position:absolute;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    filter:
+        brightness(.45)
+        saturate(1.15)
+        contrast(1.1)
+        blur(1px);
+
+    transform:scale(1.05);
+    animation:bgMove 30s linear infinite alternate;
 }
 
-/* ─── OVERLAY PANELS ─── */
-#terrainScreen,
-#tankScreen,
-#startScreen,
-#gameOverScreen {
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(6, 10, 20, 0.95);
-  padding: 36px 44px;
-  border: 1px solid #00f5ff55;
-  border-radius: 8px;
-  color: #e0f7ff;
-  text-align: center;
-  z-index: 100;
-  min-width: 340px;
-  box-shadow: 0 0 40px #00f5ff22;
+@keyframes bgMove{
+    from{
+        transform:scale(1.05) translateX(-2%) translateY(-2%);
+    }
+    to{
+        transform:scale(1.1) translateX(2%) translateY(2%);
+    }
 }
 
-#terrainScreen h1, #tankScreen h1,
-#startScreen h1, #gameOverScreen h1 {
-  margin: 0 0 6px;
-  font-size: 26px;
-  color: #00f5ff;
-  letter-spacing: 2px;
+#gameCanvas{
+    position:absolute;
+    inset:0;
+    z-index:2;
 }
 
-#terrainScreen p, #tankScreen p, #startScreen p {
-  margin: 0 0 20px;
-  color: #7ab8cc;
-  font-size: 13px;
+/* ================= HUD ================= */
+
+#hud{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:20px;
+    z-index:100;
 }
 
-/* ─── TERRAIN BUTTONS ─── */
-.btn-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 16px;
+.hud-card{
+    min-width:120px;
+    padding:12px 20px;
+
+    background:rgba(255,255,255,.08);
+
+    border:1px solid rgba(255,255,255,.15);
+
+    backdrop-filter:blur(15px);
+
+    border-radius:18px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.4),
+        inset 0 1px 0 rgba(255,255,255,.15);
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    transition:.3s;
 }
 
-.terrain-btn {
-  background: rgba(0, 245, 255, 0.08);
-  border: 1px solid #00f5ff44;
-  color: #c0eeff;
-  padding: 12px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 13px;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
-}
-.terrain-btn:hover {
-  background: rgba(0, 245, 255, 0.18);
-  border-color: #00f5ff99;
-  transform: scale(1.04);
+.hud-card:hover{
+    transform:translateY(-4px);
+    box-shadow:
+        0 20px 40px rgba(0,255,255,.25);
 }
 
-/* ─── TANK GRID ─── */
-.tank-grid {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin: 10px 0 20px;
+.hud-title{
+    font-size:11px;
+    letter-spacing:2px;
+    color:#7fdfff;
+    margin-bottom:6px;
 }
 
-.tank-btn {
-  width: 72px; height: 72px;
-  object-fit: contain;
-  cursor: pointer;
-  border: 2px solid #00f5ff33;
-  border-radius: 6px;
-  padding: 6px;
-  background: rgba(0,245,255,0.05);
-  transition: border-color 0.15s, transform 0.1s, background 0.15s;
-  filter: drop-shadow(0 0 4px #0006);
-}
-.tank-btn:hover {
-  border-color: #00f5ff88;
-  transform: scale(1.08);
-  background: rgba(0,245,255,0.12);
-}
-.tank-btn.selected {
-  border-color: #00f5ff;
-  background: rgba(0,245,255,0.2);
-  box-shadow: 0 0 12px #00f5ff55;
+#score-display,
+#level-display,
+#lives-display,
+#special-status{
+    font-size:20px;
+    font-weight:700;
 }
 
-/* ─── BUTTONS ─── */
-button, #tankChooseBtn {
-  background: transparent;
-  border: 1px solid #00f5ff;
-  color: #00f5ff;
-  padding: 10px 28px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 14px;
-  letter-spacing: 1px;
-  transition: background 0.15s, color 0.15s;
-  margin-top: 8px;
-}
-button:hover:not(:disabled) {
-  background: #00f5ff;
-  color: #000;
-}
-button:disabled {
-  opacity: 0.3;
-  cursor: default;
+.special-card{
+    border:1px solid rgba(0,255,255,.4);
 }
 
-/* ─── CONTROLS LIST ─── */
-.controls-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 20px;
-  margin: 16px 0;
-  text-align: left;
-  font-size: 13px;
-  color: #9dd;
-}
-kbd {
-  background: rgba(0,245,255,0.15);
-  border: 1px solid #00f5ff55;
-  border-radius: 3px;
-  padding: 1px 6px;
-  font-family: inherit;
-  color: #00f5ff;
-  font-size: 12px;
-}
-.hint {
-  font-size: 12px;
-  color: #7ab8cc;
-  margin: 4px 0 16px;
-  line-height: 1.6;
+/* ================= SPECIAL BAR ================= */
+
+#specialBarContainer{
+    position:fixed;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    width:300px;
+    height:18px;
+
+    background:rgba(255,255,255,.08);
+    border-radius:50px;
+    overflow:hidden;
+    z-index:100;
+
+    backdrop-filter:blur(15px);
+
+    border:1px solid rgba(255,255,255,.15);
 }
 
-/* ─── GAME OVER ─── */
-#gameOverScreen p {
-  font-size: 18px;
-  color: #9dd;
-  margin: 12px 0 20px;
+#specialBar{
+    width:0%;
+    height:100%;
+    border-radius:50px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #00ffff,
+            #00bfff,
+            #00ffff
+        );
+
+    box-shadow:
+        0 0 20px cyan;
+
+    transition:.2s;
 }
-#final-score {
-  color: #00f5ff;
-  font-size: 22px;
-  font-weight: bold;
+
+/* ================= PANELS ================= */
+
+.screen{
+    position:fixed;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:rgba(0,0,0,.55);
+
+    backdrop-filter:blur(12px);
+
+    z-index:300;
+}
+
+.hidden{
+    display:none;
+}
+
+.panel{
+    width:min(90%,900px);
+
+    padding:40px;
+
+    border-radius:30px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.12),
+            rgba(255,255,255,.05)
+        );
+
+    backdrop-filter:blur(25px);
+
+    border:1px solid rgba(255,255,255,.15);
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.55);
+
+    text-align:center;
+
+    animation:panelAppear .5s ease;
+}
+
+@keyframes panelAppear{
+    from{
+        transform:scale(.8);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+.panel h1{
+    font-size:48px;
+    margin-bottom:25px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #00ffff,
+            #00bfff,
+            #ffffff
+        );
+
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+/* ================= BUTTONS ================= */
+
+button{
+    cursor:pointer;
+
+    padding:15px 30px;
+
+    border:none;
+
+    border-radius:16px;
+
+    color:white;
+
+    font-size:18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00bfff,
+            #0066ff
+        );
+
+    transition:.25s;
+
+    box-shadow:
+        0 10px 25px rgba(0,150,255,.3);
+}
+
+button:hover{
+    transform:
+        translateY(-4px)
+        scale(1.04);
+
+    box-shadow:
+        0 20px 40px rgba(0,255,255,.4);
+}
+
+button:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+}
+
+/* ================= TERRAIN ================= */
+
+.terrain-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:20px;
+    margin:30px 0;
+}
+
+.terrain-btn{
+    padding:12px;
+}
+
+.terrain-btn img{
+    width:100%;
+    height:120px;
+    object-fit:cover;
+    border-radius:16px;
+}
+
+.terrain-btn span{
+    display:block;
+    margin-top:10px;
+}
+
+/* ================= TANKS ================= */
+
+.tank-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:25px;
+    margin:30px 0;
+}
+
+.tank-card{
+    padding:20px;
+
+    border-radius:24px;
+
+    background:
+        rgba(255,255,255,.06);
+
+    border:1px solid rgba(255,255,255,.12);
+
+    transition:.3s;
+}
+
+.tank-card:hover{
+    transform:
+        translateY(-8px)
+        scale(1.03);
+
+    box-shadow:
+        0 25px 45px rgba(0,255,255,.25);
+}
+
+.tank-card.selected{
+    border:2px solid cyan;
+    box-shadow:
+        0 0 30px cyan;
+}
+
+.tank-card img{
+    width:120px;
+    height:120px;
+    object-fit:contain;
+}
+
+/* ================= MOBILE ================= */
+
+#mobileControls{
+    display:none;
+}
+
+@media(max-width:900px){
+
+    #hud{
+        flex-wrap:wrap;
+        width:95%;
+        gap:10px;
+    }
+
+    .hud-card{
+        min-width:90px;
+        padding:8px;
+    }
+
+    #mobileControls{
+        display:flex;
+        position:fixed;
+        inset:0;
+        pointer-events:none;
+        z-index:150;
+    }
+
+    #joystickArea{
+        position:absolute;
+        left:20px;
+        bottom:20px;
+
+        width:140px;
+        height:140px;
+
+        border-radius:50%;
+
+        background:
+            rgba(255,255,255,.08);
+
+        pointer-events:auto;
+    }
+
+    #joystick{
+        width:60px;
+        height:60px;
+
+        border-radius:50%;
+
+        background:cyan;
+
+        position:absolute;
+
+        left:40px;
+        top:40px;
+    }
+
+    .mobileButtons{
+        position:absolute;
+        right:20px;
+        bottom:30px;
+
+        display:flex;
+        flex-direction:column;
+        gap:20px;
+
+        pointer-events:auto;
+    }
+
+    .mobileButtons button{
+        width:75px;
+        height:75px;
+        border-radius:50%;
+        font-size:32px;
+    }
+}
+
+/* ================= LOADER ================= */
+
+#loadingScreen{
+    position:fixed;
+    inset:0;
+    background:#050b14;
+    z-index:1000;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:25px;
+}
+
+.loader{
+    width:80px;
+    height:80px;
+
+    border-radius:50%;
+
+    border:8px solid rgba(255,255,255,.15);
+
+    border-top:8px solid cyan;
+
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    from{
+        transform:rotate(0deg);
+    }
+    to{
+        transform:rotate(360deg);
+    }
 }
