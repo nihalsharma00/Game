@@ -1,71 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>2D Tank Shooter</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Shooter Remastered</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div id="canvasWrapper">
-  <img id="backgroundImage" />
-  <canvas id="gameCanvas"></canvas>
+<div id="gameContainer">
+
+    <!-- Background -->
+    <img id="backgroundImage" src="forest.png">
+
+    <!-- Main Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+
+        <div class="hud-card">
+            <span class="hud-title">SCORE</span>
+            <span id="score-display">0</span>
+        </div>
+
+        <div class="hud-card">
+            <span class="hud-title">LEVEL</span>
+            <span id="level-display">1</span>
+        </div>
+
+        <div class="hud-card">
+            <span class="hud-title">LIVES</span>
+            <span id="lives-display">❤️❤️❤️</span>
+        </div>
+
+        <div class="hud-card special-card">
+            <span class="hud-title">SPECIAL</span>
+            <span id="special-status">0 / 20</span>
+        </div>
+
+    </div>
+
+    <!-- Special Charge -->
+    <div id="specialBarContainer">
+        <div id="specialBar"></div>
+    </div>
+
 </div>
 
-<div id="hud">
-  <div id="score-display">Score: 0</div>
-  <div id="level-display">Level: 1</div>
-  <div id="lives-display">Lives: ❤️❤️❤️</div>
-  <div id="special-status">Special: 0/20</div>
+<!-- ================= TERRAIN SELECTION ================= -->
+
+<div id="terrainScreen" class="screen">
+
+    <div class="panel">
+
+        <h1>Choose Battlefield</h1>
+
+        <div class="terrain-grid">
+
+            <button class="terrain-btn" data-terrain="forest">
+                <img src="forest.png">
+                <span>Forest</span>
+            </button>
+
+            <button class="terrain-btn" data-terrain="ice">
+                <img src="snow.png">
+                <span>Ice</span>
+            </button>
+
+            <button class="terrain-btn" data-terrain="sahara">
+                <img src="desert.jpg">
+                <span>Sahara</span>
+            </button>
+
+            <button class="terrain-btn" data-terrain="city">
+                <img src="city.png">
+                <span>City</span>
+            </button>
+
+        </div>
+
+        <button id="terrainContinueBtn" disabled>
+            Continue
+        </button>
+
+    </div>
+
 </div>
 
-<!-- TERRAIN SELECT -->
-<div id="terrainScreen">
-  <h1>🎮 Tank Shooter</h1>
-  <p>Choose your battlefield</p>
-  <div class="btn-grid">
-    <button class="terrain-btn" data-terrain="forest">🌲 Forest</button>
-    <button class="terrain-btn" data-terrain="ice">❄️ Ice</button>
-    <button class="terrain-btn" data-terrain="sahara">🏜️ Sahara</button>
-    <button class="terrain-btn" data-terrain="volcano">🌋 Volcano</button>
-    <button class="terrain-btn" data-terrain="city">🏙️ City</button>
-  </div>
+<!-- ================= TANK SELECTION ================= -->
+
+<div id="tankScreen" class="screen hidden">
+
+    <div class="panel">
+
+        <h1>Select Tank</h1>
+
+        <div class="tank-grid">
+
+            <div class="tank-card tank-btn" data-tank="tank1">
+                <img src="tank1.png">
+                <h3>Assault</h3>
+                <p>Balanced tank.</p>
+            </div>
+
+            <div class="tank-card tank-btn" data-tank="tank2">
+                <img src="tank2.png">
+                <h3>Heavy</h3>
+                <p>More HP.</p>
+            </div>
+
+            <div class="tank-card tank-btn" data-tank="tank3">
+                <img src="tank3.png">
+                <h3>Scout</h3>
+                <p>Fast movement.</p>
+            </div>
+
+            <div class="tank-card tank-btn" data-tank="tank4">
+                <img src="tank4.png">
+                <h3>Sniper</h3>
+                <p>High damage.</p>
+            </div>
+
+        </div>
+
+        <button id="tankContinueBtn" disabled>
+            Start Mission
+        </button>
+
+    </div>
+
 </div>
 
-<!-- TANK SELECT (all 4 tanks) -->
-<div id="tankScreen" style="display:none;">
-  <h1>Choose Your Tank</h1>
-  <p>Click a tank to select it</p>
-  <div class="tank-grid">
-    <img src="tank1.png" class="tank-btn" data-tank="tank1" title="Tank 1">
-    <img src="tank2.png" class="tank-btn" data-tank="tank2" title="Tank 2">
-    <img src="tank3.png" class="tank-btn" data-tank="tank3" title="Tank 3">
-    <img src="tank4.png" class="tank-btn" data-tank="tank4" title="Tank 4">
-  </div>
-  <button id="tankChooseBtn" disabled>Into Battle →</button>
+<!-- ================= START SCREEN ================= -->
+
+<div id="startScreen" class="screen hidden">
+
+    <div class="panel">
+
+        <h1>Tank Shooter Remastered</h1>
+
+        <div class="controls-grid">
+
+            <div>W A S D → Move</div>
+            <div>Mouse → Aim</div>
+            <div>Left Click → Shoot</div>
+            <div>Space → Special</div>
+            <div>P → Pause</div>
+
+        </div>
+
+        <button id="startGameBtn">
+            START GAME
+        </button>
+
+    </div>
+
 </div>
 
-<!-- START SCREEN -->
-<div id="startScreen" style="display:none;">
-  <h1>Ready!</h1>
-  <div class="controls-list">
-    <div><kbd>WASD</kbd> Move</div>
-    <div><kbd>Mouse</kbd> Aim</div>
-    <div><kbd>Click</kbd> Shoot</div>
-    <div><kbd>Space / F</kbd> Special</div>
-  </div>
-  <p class="hint">Special: kill 20 enemies to charge it.<br>Destroys all enemies + gives invincibility!</p>
-  <button onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))">▶ Start Game</button>
+<!-- ================= PAUSE SCREEN ================= -->
+
+<div id="pauseScreen" class="screen hidden">
+
+    <div class="panel">
+
+        <h1>Paused</h1>
+
+        <button id="resumeBtn">
+            Resume
+        </button>
+
+        <button id="restartBtn">
+            Restart
+        </button>
+
+    </div>
+
 </div>
 
-<!-- GAME OVER -->
-<div id="gameOverScreen" style="display:none;">
-  <h1>💥 Game Over</h1>
-  <p>Final Score: <span id="final-score">0</span></p>
-  <button onclick="location.reload()">Play Again</button>
+<!-- ================= GAME OVER ================= -->
+
+<div id="gameOverScreen" class="screen hidden">
+
+    <div class="panel">
+
+        <h1>GAME OVER</h1>
+
+        <h2 id="final-score">
+            Score: 0
+        </h2>
+
+        <button onclick="location.reload()">
+            Play Again
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ================= MOBILE CONTROLS ================= -->
+
+<div id="mobileControls">
+
+    <div id="joystickArea">
+        <div id="joystick"></div>
+    </div>
+
+    <div class="mobileButtons">
+        <button id="shootBtn">🔥</button>
+        <button id="specialBtn">⚡</button>
+    </div>
+
+</div>
+
+<!-- ================= LOADING ================= -->
+
+<div id="loadingScreen">
+
+    <div class="loader"></div>
+
+    <h2>Loading Assets...</h2>
+
 </div>
 
 <script src="game.js"></script>
+
 </body>
 </html>
